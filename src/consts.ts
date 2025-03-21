@@ -9,7 +9,7 @@ export const SITE_DESCRIPTION = "A blog template";
 export const DATE_FORMAT = "ddd MMM DD YYYY";
 
 // User profile information
-export const USER_NAME = "Hwangstice";
+export const USER_NAME = "Hwangstice ";
 export const USER_SITE = "https://dathwang.github.io/"; // At the same time, this is also the site retrieved by the i18n configuration.
 export const USER_AVATAR = "/profile.webp";
 
