@@ -12,7 +12,7 @@ tags:
 
 This blog marks a significant milestone (March 2, 2025) in my reversing journey since I'm completely new to this. Hopefully, it will help (or at least entertain) anyone who's into this kind of stuff too!
 
-<a href="https://exploit.education/protostar/" target="_blank">Protostar</a> is the first learning resources about binary exploitation I fell in love with. It gave me a strong foundation for reverse engineering by covering various topics, including Stack Buffer Overflow, Format String Vulnerability, Heap Exploitation and more. 
+<a href="https://exploit.education/protostar/" target="_blank">Protostar</a> built a solid foundation for reverse engineering, covering everything from Stack Buffer Overflows and Format String Vulnerabilities to Heap Exploitation and more.
 
 ## Stack 0
 Description:

@@ -12,9 +12,9 @@ tags:
 
 Heap challenges gave me a really hard time. They're some of the trickiest ones I've come across, but digging into them was totally worth it, especially the last challenge (Heap 3). That one completely changed how I see the heap, thanks to Doug Lea's malloc (dlmalloc).
 
-After diving deep into the mechanics, rereading explanations, and experimenting with different approaches, things finally started to click. That moment of understanding was incredibly rewarding.
+After a lot of trial and error, rereading explanations, and testing different approaches, things finally started to make sense. And let me tell you, that "aha" moment was totally worth it!
 
-There are already plenty of great resources on heap exploitation, but I'm writing this to solidify my own understanding and share some cool insights I picked up along the way. Hope you love this <3
+There are already tons of great resources on heap exploitation, but I'm writing this to solidify what I've learned and share some cool insights along the way. Hope you enjoy it! ❤️
 
 ## Heap 0
 

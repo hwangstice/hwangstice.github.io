@@ -10,7 +10,7 @@ tags:
   - Wargame
 ---
 
-Protostar’s format string challenges are super fun! I spent hours trying to really understand the underlying concept. In this blog, I want to share what I’ve learned, including my approach, techniques, and tricks. Hope you all enjoy it ヾ(≧▽≦*)o
+Protostar's format string challenges are amazing! I spent hours messing around to really get how they work. In this blog, I'll share my approach, some cool tricks, and a few things that might help you out. Hope you have fun reading it! ヾ(≧▽≦*)o
 
 ## Format 0
 
