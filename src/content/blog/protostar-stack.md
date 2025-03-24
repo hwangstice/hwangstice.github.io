@@ -1,7 +1,7 @@
 ---
 title: "Protostar - Stack"
 description: "Writeup for Protostar Stack"
-pubDate: "March 09 2025"
+pubDate: "March 02 2025"
 image: /image/blog-cover/stack.jpg
 categories:
   - tech
