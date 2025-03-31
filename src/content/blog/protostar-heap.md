@@ -6,8 +6,8 @@ image: /image/blog-cover/heap.jpg
 categories:
   - tech
 tags:
-  - Pwnable
   - Wargame
+  - Pwnable
 ---
 
 Heap challenges gave me a really hard time. They're some of the trickiest ones I've come across, but digging into them was totally worth it, especially the last challenge (Heap 3). That one completely changed how I see the heap, thanks to Doug Lea's malloc (dlmalloc).

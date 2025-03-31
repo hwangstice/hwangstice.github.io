@@ -6,8 +6,8 @@ image: /image/blog-cover/format.jpg
 categories:
   - tech
 tags:
-  - Pwnable
   - Wargame
+  - Pwnable
 ---
 
 Protostar's format string challenges are amazing! I spent hours messing around to really get how they work. In this blog, I'll share my approach, some cool tricks, and a few things that might help you out. Hope you have fun reading it! ヾ(≧▽≦*)o

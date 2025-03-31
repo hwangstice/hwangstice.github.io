@@ -67,13 +67,13 @@ export const menuItems = [
   //  svg: "material-symbols:code-blocks-outline",
   //  target: "_self",
   //}, // Projects page
-  {
-    id: "friend",
-    text: "Friend",
-    href: "/friend",
-    svg: "material-symbols:supervisor-account-outline-rounded",
-    target: "_self",
-  }, // Friends page
+  //{
+  //  id: "friend",
+  //  text: "Friend",
+  //  href: "/friend",
+  //  svg: "material-symbols:supervisor-account-outline-rounded",
+  //  target: "_self",
+  //}, // Friends page
   {
     id: "contact",
     text: "Contact",
