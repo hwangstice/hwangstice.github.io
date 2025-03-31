@@ -87,21 +87,21 @@ From <a href="https://dathwang.github.io/blog/protostar-net/" target="_blank">Pr
 
 Right away, you can see a **buffer overflow** in `gets()`, which lets us take control of the program. Since this runs as root and listens for connections, we can turn it into a ***remote root exploit*** and execute our own code!
 
-![toupper problem](/public/image/protostar-final/toupper.png)
+![toupper problem](public/image/protostar-final/toupper.png)
 
 However, our script won't work because `toupper()` changes lowercase to uppercase. So, how do we work around this?
 
 **Just think backwards.** `strlen()` stops counting at `\0`. If we place `\0` before our exploit, we can bypass `toupper()`.
 
-![strlen-man-page](/public/image/protostar-final/strlen.png)
+![strlen-man-page](public/image/protostar-final/strlen.png)
 
 Since `gets()` stops reading at **newline or EOF**, so our exploit payload doesn't break when inserting `\x0`.
 
-![gets-man-page](/public/image/protostar-final/gets.png)
+![gets-man-page](public/image/protostar-final/gets.png)
 
 Now, let's try a simple payload:
 
-![test-program](/public/image/protostar-final/test-program.png)
+![test-program](public/image/protostar-final/test-program.png)
 
 We successfully overwrote the return address, but **why don't we see any message**?
 
@@ -129,7 +129,7 @@ End of assembler dump.
 
 From the `execve()` man page, we see it requires **three parameters**:
 
-![execve-man-page](/public/image/protostar-final/execve.png)
+![execve-man-page](public/image/protostar-final/execve.png)
 
 So, we'll craft our exploit to overwrite the stack just like this simple C program:
 
@@ -143,7 +143,7 @@ void main() {
 
 Here's what the **stack layout** would look like:
 
-![execve-stack](/public/image/protostar-final/execve-stack.png)
+![execve-stack](public/image/protostar-final/execve-stack.png)
 
 Now that we understand the stack layout, let's find the address of **"/bin/sh"** in **libc**.
 
@@ -217,7 +217,7 @@ t.sock = s
 t.interact()
 ```
 
-![final0-successful-exploit](/public/image/protostar-final/final0.png)
+![final0-successful-exploit](public/image/protostar-final/final0.png)
 
 ## Final 1
 
@@ -333,21 +333,21 @@ int main(int argc, char **argv, char **envp)
 
 In this level, we will adopt **Remote Format String Exploit** in `syslog()`. 
 
-![syslog-man-page](/public/image/protostar-final/syslog-man-page.png)
+![syslog-man-page](public/image/protostar-final/syslog-man-page.png)
 
 ### Analysis
 
 The program prompts us to enter a **username** using the `username` command and a **password** using the `login` command. These values are then logged into `/var/log/syslog`.
 
-![check-syslog](/public/image/protostar-final/check-syslog.png)
+![check-syslog](public/image/protostar-final/check-syslog.png)
 
 Since `syslog()` functions similarly to `printf()`, injecting format specifiers into the **username** or **pw** variables could allow us to manipulate memory.
 
-![format-string-syslog](/public/image/protostar-final/format-string-syslog.png)
+![format-string-syslog](public/image/protostar-final/format-string-syslog.png)
 
 Let's test it:
 
-![syslog-after-format-string](/public/image/protostar-final/syslog-after-format-string.png)
+![syslog-after-format-string](public/image/protostar-final/syslog-after-format-string.png)
 
 Success! We've dumped memory, confirming the vulnerability.
 
@@ -382,15 +382,15 @@ s.send('login ' + login + '\n')
 print read_until('[final1] $ ')
 ```
 
-![strncmp-got](/public/image/protostar-final/strncmp-got.png)
+![strncmp-got](public/image/protostar-final/strncmp-got.png)
 
 Now, we just need to overwrite the address of `system()` into **strncmp()'s GOT entry**.
 
-![system-address](/public/image/protostar-final/system-address.png)
+![system-address](public/image/protostar-final/system-address.png)
 
 However, there's a misalignment issue due to **IP and port length**.
 
-![alignment-problem](/public/image/protostar-final/alignment-problem.png)
+![alignment-problem](public/image/protostar-final/alignment-problem.png)
 
 The **A's** aren't aligned, and they might shift depending on the hostname length. To fix this, we adjust the padding so there's no offset.
 
@@ -428,7 +428,7 @@ s.send('login ' + login + '\n')
 print read_until('[final1] $ ')
 ```
 
-![fix-alignment](/public/image/protostar-final/fix-alignment.png)
+![fix-alignment](public/image/protostar-final/fix-alignment.png)
 
 Great! The alignment issue is fixed. Now, we determine how many characters have been printed so we can precisely overwrite `strncmp()`.
 
@@ -463,7 +463,7 @@ print read_until('[final1] $ ')
 raw_input('waiting... hit [enter]')
 ```
 
-![characters-overwritten](/public/image/protostar-final/characters-overwritten.png)
+![characters-overwritten](public/image/protostar-final/characters-overwritten.png)
 
 ### Exploit
 
@@ -502,7 +502,7 @@ t.sock = s
 t.interact()
 ```
 
-![final1-exploit](/public/image/protostar-final/final1.png)
+![final1-exploit](public/image/protostar-final/final1.png)
 
 ## Final 2
 
@@ -659,15 +659,15 @@ s.send(payload2)
 
 The first thing is to set up `gdb`:
 
-![gdb-set-up](/public/image/protostar-final/gdb-set-up.png)
+![gdb-set-up](public/image/protostar-final/gdb-set-up.png)
 
 Next, disassemble `get_requests()` and set a breakpoint right at where `check_path()` returns.
 
-![get-request-disassemble](/public/image/protostar-final/get_requests_disassemble.png)
+![get-request-disassemble](public/image/protostar-final/get_requests_disassemble.png)
 
 Let's run our script, and inspect the memory:
 
-![memmove-result](/public/image/protostar-final/memmove-result.png)
+![memmove-result](public/image/protostar-final/memmove-result.png)
 
 ### Exploit `free()`
 
@@ -688,7 +688,7 @@ This means we need to manipulate the **third chunk's PREV_INUSE** bit to fool **
 
 To find the **third chunk's starting address**, `dlmalloc` adds $(chunk start address) + (chunk size & ~0x1)$
 
-![heap-dump](/public/image/protostar-final/heap-dump.png)
+![heap-dump](public/image/protostar-final/heap-dump.png)
 
 For our **second chunk**:
 
@@ -783,7 +783,7 @@ s.send(payload1)
 s.send(payload2)
 ```
 
-![sigtrap](/public/image/protostar-final/sigtrap.png)
+![sigtrap](public/image/protostar-final/sigtrap.png)
 
 Success! Now, let's refine our **actual exploit**.
 
@@ -826,7 +826,7 @@ t.sock = s
 t.interact()
 ```
 
-![final2-win](/public/image/protostar-final/final2.png)
+![final2-win](public/image/protostar-final/final2.png)
 
 ### Refereces
 
