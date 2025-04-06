@@ -575,7 +575,7 @@ Level Goal
 
 >After all this git stuff, it’s time for another escape. Good luck!
 
-When you log in to this level, you're immediately dropped into something called the **Uppercase Shell**, which automatically converts everything you type into **UPPERCASE** letters.
+When log in to this level, we're immediately dropped into something called the **Uppercase Shell**, which converts everything we type into **UPPERCASE** letters.
 
 ![bandit32-uppershell](public/image/overthewire-bandit/bandit32-uppercase-shell.png)
 
@@ -587,7 +587,7 @@ The trick here lies in how this custom shell is built. From the behavior, we can
 system(command);
 ```
 
-In UNIX-like systems, `system()` typically runs your command using `sh -c <command>`. So for example, if you typed `cat`, the shell would actually try to run something like:
+In UNIX-like systems, `system()` typically runs command using `sh -c <command>`. So for example, if we typed `cat`, the shell would actually try to run something like:
 
 ```shell
 sh -c CAT
@@ -601,7 +601,7 @@ We can bypass this by using `$0` to open the `/bin/sh` shell.
 
 But how does `$0` help?
 
-`$0` refers to the name of the current script or program being executed. So when **the Uppercase Shell** runs your command internally via `sh`, you're **already inside a sh process**. 
+`$0` refers to the script or program being executed. So when **the Uppercase Shell** runs command internally via `sh`, we're **already inside a sh process**. 
 
 >The **Uppercase Shell** basically a `sh` shell, but have the feature of converting input into **UPPERCASE**.
 
