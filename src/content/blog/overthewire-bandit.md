@@ -593,15 +593,13 @@ In UNIX-like systems, `system()` typically runs your command using `sh -c <comma
 sh -c CAT
 ```
 
-But here's the problem: since `CAT` is in uppercase and there's no such binary called `CAT`, the command fails. That’s why basic commands like `sh`, `man`, `ls`, etc, won't work. They all get converted to uppercase.
+However, because `CAT` is in uppercase and there's no such binary called `CAT`, the command fails. That’s why basic commands like `sh`, `man`, `ls`,... won't work. They all get converted to uppercase.
 
 We can bypass this by using `$0` to open the `/bin/sh` shell.
 
 ![bandit32-solution](public/image/overthewire-bandit/bandit32-solution.png)
 
 But how does `$0` help?
-
-This is where things get clever.
 
 `$0` refers to the name of the current script or program being executed. So when **the Uppercase Shell** runs your command internally via `sh`, you're **already inside a sh process**. 
 
