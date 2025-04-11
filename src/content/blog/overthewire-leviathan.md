@@ -243,3 +243,7 @@ Here is the solution.
 Now, we have cleared all levels in **OverTheWire Leviathan**. 
 
 I make this blog to solidify my knowledge only, and there are tons of writeups about this game too, so maybe this won't break the rule ?! HAHA 🙂‍↕️
+
+## Reference
+
+- <a href="https://hackmd.io/@whoisthatguy/toctou" target="_blank">TOCTOU Attack</a>
