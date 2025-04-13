@@ -413,7 +413,7 @@ We also know that the address of **target** is at "0x080496f4".
 
 Now is the real challenge, where we have to write 4 bytes of "0x01025544" into "0x080496f4". To achieve this, we need to write each byte separately at the corresponding memory locations: 0x080496**f4**, 0x080496**f5**, 0x080496**f6**, and 0x080496**f7**.
 
-We place these addresses onto the stack and use ***Direct Parameter Access (DPA)*** to reference them correctly. Since our first address starts at **$12**, the other three addresses will be positioned at **$13**, **$14**, and finally **$15**.
+We place these addresses onto the stack and use ***Direct Parameter Access (DPA)*** to reference them correctly. Since our first address starts at **\$12**, the other three addresses will be positioned at **\$13**, **\$14**, and finally **\$15**.
 
 So far, our exploit will look like this:
 

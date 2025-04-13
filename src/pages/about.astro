@@ -1,0 +1,62 @@
+---
+import BaseLayout from "@/layouts/BaseLayout.astro";
+import { Icon } from "astro-icon/components";
+import MainCard from "@/components/MainCard.astro";
+import GitHubStats from "@/components/mdx/GitHubStats.astro";
+---
+
+<BaseLayout title="About">
+  <MainCard
+    title="About Me"
+    description="keep kalm"
+    image="/home.webp"
+    infoIcon="lucide:user"
+  >
+    <div class="space-y-10 mb-8">
+      <!-- Profile Section -->
+      <section class="flex flex-col md:flex-row gap-8 items-center md:items-start">
+        <div class="avatar">
+          <div
+            class="w-32 h-32 md:w-40 md:h-40 rounded-xl ring ring-primary ring-offset-base-100 ring-offset-2 overflow-hidden"
+          >
+            <img src="/public/image/blog-cover/profile.webp" alt="dathwang" width="160" height="160" loading="eager" />
+          </div>
+        </div>
+
+        <div class="flex-1 text-center md:text-left">
+          <h1 class="text-3xl md:text-4xl font-bold mb-2">Dat Hwang</h1>
+          <p class="text-xl text-base-content/80 mb-4">食べて、寝て、Reverse、繰り返す</p>
+
+          <div class="flex flex-wrap gap-3 justify-center md:justify-start mb-6">
+            <a
+              href="https://github.com/dathwang"
+              target="_blank"
+              rel="noopener noreferrer"
+              class="btn btn-sm btn-outline gap-2"
+            >
+              <Icon name="lucide:github" class="w-4 h-4" />
+              <span>GitHub</span>
+            </a>
+            <a
+              href="https://www.instagram.com/dat.hwang/"
+              target="_blank"
+              rel="noopener noreferrer"
+              class="btn btn-sm btn-outline gap-2"
+            >
+              <Icon name="lucide:instagram" class="w-4 h-4" />
+              <span>Instagram</span>
+            </a>
+            <a href="mailto:datquochoang0587@gmail.com" class="btn btn-sm btn-outline gap-2">
+              <Icon name="lucide:mail" class="w-4 h-4" />
+              <span>Email</span>
+            </a>
+          </div>
+
+          <p class="text-base-content/80">
+            Hello! I'm DatHwang, a passionate student focused on Reverse Engineering, and love doing Pwnable. When I'm not diving into binaries, you'll probably find me out running.
+          </p>
+        </div>
+      </section>
+    </div>
+  </MainCard>
+</BaseLayout>

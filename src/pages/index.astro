@@ -1,0 +1,36 @@
+---
+import BaseLayout from "@/layouts/BaseLayout.astro";
+import { Icon } from "astro-icon/components";
+import MainCard from "@/components/MainCard.astro";
+import FeatureCard from "@/components/mdx/FeatureCard.astro";
+import GitHubStats from "@/components/mdx/GitHubStats.astro";
+---
+
+<BaseLayout title="Home">
+  <MainCard
+    title="Dat Hwang Introduction"
+    description="This space is where I share thoughts, experiments, and challenges in Reverse Engineering and Pwnable."
+    image="/home.webp"
+    infoIcon="lucide:info"
+  >
+    <div class="space-y-8">
+      <!-- Hero Section -->
+      <section class="py-6">
+        <div class="flex flex-col items-center text-center ">
+          <h1 class="text-4xl font-bold mb-4 from-primary to-secondary">
+            ☃️ Hwangstice
+          </h1>
+          <p class="text-xl text-base-content/80 max-w-3xl mb-8">
+            Hey, welcome to my blog. I post CTF writeups, wargames, reverse engineering stuff, and random thoughts I find cool. If you're into that kind of thing, let’s embark on this journey together. ❄️
+          </p>
+          <div class="flex flex-wrap gap-4 justify-center">
+            <a href="/blog" target="_blank" class="btn btn-outline gap-2">
+              <Icon name="lucide:book-open" class="w-5 h-5" />
+              <span>Explore Blog</span>
+            </a>
+          </div>
+        </div>
+      </section>
+    </div>
+  </MainCard>
+</BaseLayout>
