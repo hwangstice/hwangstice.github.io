@@ -580,7 +580,7 @@ The issue comes from the variable name itself. Since the struct is also named **
 
 ![faulty-variable-name](/image/protostar-heap/faulty-variable-name-heap2.png)
 
-But this is not a major problem! When we use `login` command, it always references `auth->auth`, which translates to `auth + 28`. Also, we know that the `reset` command introduces a **Use-After-Free (UAF)** bug, causing **auth** to point to deallocated memory. 
+But this is not a major problem! When we use `login` command, it always references `auth->auth`, which translates to `auth + 32`. Also, we know that the `reset` command introduces a **Use-After-Free (UAF)** bug, causing **auth** to point to deallocated memory. 
 
 With this in mind, we can exploit heap overflow using the `service` command, which allocates a new string on the heap. By using the `reset` command, we can control where this new string is stored, as the freed chunk is placed in the **fast bin**. 
 
@@ -797,7 +797,7 @@ Here is how an allocated chunk looks like:
 ```
     chunk-> +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
             |       prev_size                 | |
-            |       (if deallocated)          | |
+            |       (if allocated)            | |
             +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
             |       size                      |P|
       mem-> +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
