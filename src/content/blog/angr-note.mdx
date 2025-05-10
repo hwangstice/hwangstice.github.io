@@ -1,0 +1,3010 @@
+---
+title: "angr note"
+description: "Writeup for my angr-note repository"
+pubDate: "May 10 2025"
+image: /image/blog-cover/angr-note.jpg
+categories:
+  - tech
+tags:
+  - Reverse
+  - angr
+---
+
+import Collapse from "../../components/mdx/Collapse.astro";
+import Diff from "../../components/mdx/Diff.astro";
+import Error from "../../components/mdx/Error.astro";
+import Info from "../../components/mdx/Info.astro";
+import Kbd from "../../components/mdx/Kbd.astro";
+import Success from "../../components/mdx/Success.astro";
+import Warning from "../../components/mdx/Warning.astro";
+import TimeLine from "../../components/mdx/TimeLine.astro";
+import LinkCard from "../../components/mdx/LinkCard.astro";
+
+Today post is all about the challenges in my repo **"angr-note"**. I've written down my thought process and explained things step by step, so it's easier to understand how I solved each one. Hope it helps you get more comfortable with **angr** :D
+
+Below is the link to my **"angr-note"** Github Repo for installation, sources and solutions.
+
+<LinkCard
+  title="angr-note"
+  desc="My github repo!"
+  url="https://github.com/dathwang/angr-note"
+  img="/image/angr-note/angr-note-github.jpg"
+/>
+
+## Reverse Engineering 101
+
+### Analyze the Binary
+
+When loading the bianry into IDA, you can notice that the program is really short. 
+
+![short-program](/image/angr-note/RE101-short-program.png)
+
+Let's examine the `_start` function. You will see that it is loading a bunch of hex values (which are actually ASCII characters) into a variable called `_edata`.
+
+![Analyze-the-Binary](/image/angr-note/RE101-binary-analyze.png)
+
+So, in the context of **angr**, if we can somehow make it **have a step over** the `_start` function, we should have the flag stored in `_edata`. Our job is to read it and get the flag!
+
+### Build the script
+
+First of all, let's include all the libraries, turn on INFO logging so we can see what is happening while the script runs, and the IPython debugging view. Personally, I love using IPython debugging view because it lets me quickly test things on the binary before writing out the full **angr** script!
+
+```python
+import angr 
+import logging 
+
+logging.getLogger("angr").setLevel(logging.INFO)
+
+def hook(l=None):
+    if l:
+        locals().update(l)
+    import IPython
+    IPython.embed(banner1='', exit_msg='', confirm_exit=False)
+    exit(0)
+```
+
+Now, we should load the binary into **angr** and pick a place where our script should start. In this challenge, it's best to start from scratch, as we want to have the `_edata` variable prepared. This means the binary loaded into our **angr** will prepare the `_edata` variable for us. If we start from somewhere else, we must create a symbolic variable for `_edata`, which makes things more complicated.
+
+``` python
+proj = angr.Project("./RE101")
+init_state = proj.factory.entry_state()
+```
+
+With IPython, we can test to see if our script is running properly.
+
+![RE101-IPython-test](/image/angr-note/RE101-IPython-test.png)
+
+Our goal here is to read the flag from `_edata`, and we can do that just by stepping through the `_start` function once. To do that, we use a **Simulation Manager**.
+
+But why we need **Simulation Manager** while we can call `.step()` in `init_state`?
+
+The answer is simple, when we use a **Simulation Manager**, calling `.step()` actually ***moves the program into the next state***. 
+
+![RE101-simulation](/image/angr-note/RE101-simulation.png)
+
+On the other hand, if we just call `.step()` on `init_state`, it doesn't move forward, it just shows what the next possible state would be.
+
+![RE101-init_state](/image/angr-note/RE101-init_state.png)
+
+After making a step with **Simulation Manager**, we must find the address of `_edata` in the binary and then read the value at that address.
+
+![RE101-_edata-addr](/image/angr-note/RE101-_edata-addr.png)
+
+![RE101-read-flag](/image/angr-note/RE101-read-flag.png)
+
+### Solution
+
+<Collapse title="RE101 Final Script">
+```python
+import angr 
+import logging 
+
+logging.getLogger("angr").setLevel(logging.INFO)
+
+def hook(l=None):
+    if l:
+        locals().update(l)
+    import IPython
+    IPython.embed(banner1='', exit_msg='', confirm_exit=False)
+    exit(0)
+
+def main():
+    proj = angr.Project("./RE101")
+    init_state = proj.factory.entry_state()
+
+    simulation = proj.factory.simgr(init_state)
+    simulation.step()
+
+    flag = simulation.active[0]
+    edata_addr = 0x0804911A
+    print("Flag:", flag.mem[edata_addr].string.concrete)
+
+if __name__=="__main__":
+    main()
+```
+</Collapse>
+
+## Library Card 
+
+### Analyze the Binary
+
+There is a function named `print_flag` from IDA.
+
+![LC-function-ida](/image/angr-note/LC-function-ida.png)
+
+As the name suggests, this function prints the flag. We can clearly see it calling `printf`, and the format looks just like a real flag!
+
+![LC-printf](/image/angr-note/LC-printf.png)
+
+Let's see which functions call `print_flag` using **Xrefs to** in IDA.
+
+![LC-xrefs-to](/image/angr-note/LC-xrefs-to.png)
+
+This is the pseudo-code of `gatekeeper84`.
+
+![LC-gatekeeper84](/image/angr-note/LC-gatekeeper84.png)
+
+So, with arguments in the picture above, we will have our flag. Furthermore, we can simulate this function call in **angr** using a **callable function**.
+
+### Build the script
+
+We start with necessary libraries, **LOGGING INFO** view, and IPython debugging view.
+
+```python
+import angr 
+import logging
+
+logging.getLogger('angr').setLevel(logging.INFO)
+
+def hook(l=None):
+    if l:
+        locals().update(l)
+    import IPython
+    IPython.embed(banner1='', exit_msg='', confirm_exit=False)
+    exit(0)
+```
+
+Next, let's load the binary into **angr** and do a quick check to make sure everything loaded properly.
+
+```python
+proj = angr.Project("./liblibrary_card.so")
+
+hook(locals()) # Open IPython debugging view
+```
+
+![LC-script-test](/image/angr-note/LC-script-test.png)
+
+Now, we want to simulate the call of `print_flag` function. But as you know, to get a successful call, we must have the following info:
+- Address of `print_flag`
+- Arguments
+
+To get the address of `print_flag`, we use the following comnand:
+
+```python
+print_flag_addr = proj.loader.find_symbol("print_flag").rebased_addr
+```
+
+Next, we use the **callable function** feature in **angr**, and pass the arguments `2084`, `0x82C`, `2091`.
+
+```python
+print_flag = proj.factory.callable(print_flag_addr)
+print_flag(2084, 0x82C, 2091)
+```
+
+Now, we should have a success `print_flag` call now. To get the result from the function call, we use `result_state`. Because this function prints the output to the terminal, or `stdout`, we must use the option `posix` in **angr** to get the `stdout`. 
+
+![LC-result-state](/image/angr-note/LC-result-state.png)
+
+But why we don't get the flag? This is because in **angr**, at this moment, the return value from function call is now **a symbolic value**. We can use the option `.concretize()` to force **angr** to give us the correct value (concrete value).
+
+![LC-concretize](/image/angr-note/LC-concretize.png)
+
+### Solution
+
+<Collapse title="Library Card Final Script">
+```python
+import angr 
+import logging
+
+logging.getLogger('angr').setLevel(logging.INFO)
+
+def hook(l=None):
+    if l:
+        locals().update(l)
+    import IPython
+    IPython.embed(banner1='', exit_msg='', confirm_exit=False)
+    exit(0)
+
+def main():
+    proj = angr.Project("./liblibrary_card.so")
+
+    print_flag_addr = proj.loader.find_symbol("print_flag").rebased_addr
+    print_flag = proj.factory.callable(print_flag_addr)
+    print_flag(2084, 0x82C, 2091)
+
+    if not print_flag:
+        print("print_flag function not found")
+        hook(locals())
+
+    flag = print_flag.result_state.posix.stdout
+    print("Flag:", flag.concretize())
+
+if __name__=="__main__":
+    main()
+```
+</Collapse>
+
+## Read It And Weep
+
+### Analyze the Binary 
+
+Initially, reading the pseudo-code of `main` from IDA, there is an Buffer Overflow where the program reads **64 bytes** from `stdin` into variable `s`, but `s` is a **16-byte array**.
+
+![RIAW-faulty-in-IDA](/image/angr-note/RIAW-faulty-in-IDA.png)
+
+But look closely, `s` **(an array)** is located at `rbp-0x50` and `v8` **(a variable)** is at `rbp-0x40`. That is exactly **16 bytes difference**, which is the size of `s`. I think this is a misinterpretion in IDA decompiler.
+
+To fix this and avoid confusion later (especially since I will be creating a **symbolic variable** for the input), I resized `s` in IDA so things work properly.
+
+![RIAW-cal-faulty-length](/image/angr-note/RIAW-cal-faulty-length.png)
+
+![RIAW-apply-to-IDA](/image/angr-note/RIAW-apply-to-IDA.png)
+
+And we have our new `main`.
+
+![RIAW-fix-to-IDA](/image/angr-note/RIAW-fix-to-IDA.png)
+
+From the new `main`, the flow of our program is pretty straightforward:
+1. It reads input from the user
+2. Then, it splits that input and **runs two different encoding functions** for each half
+3. Finally, it compares the results with `secret1` and `secret2`
+
+There is also a function named `read_and_print_flag()` at the success branch, where it prints data from the file `flag`. This is obviously our flag!
+
+However, since I don't have the **raw flag file**, so I just create one with data as below.
+
+![RIAW-flag-content](/image/angr-note/RIAW-flag-content.png)
+
+Now, for the **angr** script, what should we do?
+
+Our goal is to get the **correct input**. That input will be a **symbolic variable**. We'll let **angr** figure out the math, branching, and logic behind the scenes. Then, once **angr** reaches the success path (where `read_and_print_flag()` is called), we can simply **concretize the symbolic variable** to get the real input value that leads to the flag.
+
+### Build the script
+
+We start with necessary libraries, **LOGGING INFO** view, and IPython debugging view.
+
+```python
+import angr 
+import logging
+import sys
+import claripy
+import string
+
+logging.getLogger('angr').setLevel(logging.INFO)
+
+def hook(l=None):
+    if l:
+        locals().update(l)
+    import IPython
+    IPython.embed(banner1='', exit_msg='', confirm_exit=False)
+    exit(0)
+```
+
+Next, let's load the binary into **angr** and do a quick check to make sure everything loaded properly.
+
+```python
+proj = angr.Project("./read_it")
+
+hook(locals()) # Open IPython debugging view
+```
+
+![RIAW-test-angr](/image/angr-note/RIAW-test-angr.png)
+
+We will then create our **symbolic variable** for input from `claripy` library, with our custom size. Since the input asks for **64 bytes**, we should create one with that exact size.
+
+![RIAW-length](/image/angr-note/RIAW-input-length.png)
+
+```python
+user_data_in_bytes = 64
+user_data = claripy.BVS("user_data", user_data_in_bytes*8)
+
+init_state = proj.factory.entry_state(stdin=user_data)
+```
+
+Furthermore, we need to make sure our input only contains **printable characters**. 
+
+- By forcing **angr** to use characters within the printable range, we reduce the number of states it needs to explore, which helps speed up the solving process. 
+
+- It also ensures that the final input is clean and usable, that we can easily copy and paste into the actual program without any issues.
+
+```python
+for i in range(user_data_in_bytes):
+    init_state.solver.add(
+        claripy.Or(*(
+            user_data.get_byte(i) == x
+            for x in string.printable.encode('utf-8')
+        ))
+)
+```
+
+Now, we should find the path (success path) for **angr**. We could let the success path as the string **"Correct! Here is your flag:"**, and avoid the path to **"Sorry, that's not correct!"** (speed up purpose only).
+
+![RIAW-success-failure-path](/image/angr-note/RIAW-success-failure-path.png)
+
+```python
+def success_message(state):
+    return b"Correct! Here is your flag:" in state.posix.dumps(sys.stdout.fileno())
+
+def failure_message(state):
+    return b"Sorry, that's not correct!" in state.posix.dumps(sys.stdout.fileno())
+```
+
+Let's prepare the simulation to let **angr** figure out the success path.
+
+```python
+simulation = proj.factory.simgr(init_state)
+simulation.explore(find=success_message, avoid=failure_message)
+
+if not simulation.found:
+    print("NOT FOUND")
+    hook(locals())
+
+for solution_state in simulation.found:
+    solution = solution_state.solver.eval(user_data, cast_to=bytes)
+    print("Flag:", solution)
+```
+
+However, running the script for test dumping out lots of info at address `0x400973`. Hmm, looks like there is something that **angr** get stuck, cannot go through that.
+
+![RIAW-angr-problem-view](/image/angr-note/RIAW-angr-problem-view.png)
+
+Let's check in IDA to see what's that.
+
+![RIAW-angr-find-fault](/image/angr-note/RIAW-find-fault.png)
+
+![RIAW-find-fault-in-IDA](/image/angr-note/RIAW-find-fault-in-IDA.png)
+
+Yes, that's the problem. We stuck in a **for loop with a condition brach checking**. This means each time the loop runs, angr has to deal with two possible paths: 
+
+- One for the condition being true
+- One for false
+
+This leads to **branch explosion**, where **angr** ends up trying to explore every possible path through the loop, causing **the number of states to grow exponentially**.
+
+To solve this, we can use the `veritesting=True` option when creating the **Simulation Manager**. This tells **angr** to track execution using the **Program Counter**. So when different paths in a loop land at the same place (address) in the code, **angr** will merge those states, cutting down the number of paths it needs to follow.
+
+```python
+simulation = proj.factory.simgr(init_state, veritesting=True)
+```
+
+And we successfully get the **correct input** for our challenge.
+
+![RIAW-solution](/image/angr-note/RIAW-solution.png)
+
+### Solution
+
+<Collapse title="Read It And Weep Final Script">
+```python
+import angr 
+import logging 
+import sys
+import claripy
+import string
+
+logging.getLogger("angr").setLevel(logging.INFO)
+
+def hook(l=None):
+    if l:
+        locals().update(l)
+    import IPython
+    IPython.embed(banner1='', exit_msg='', confirm_exit=False)
+    exit(0)
+
+def failure_message(state):
+    return b"Sorry, that's not correct!" in state.posix.dumps(sys.stdout.fileno())
+
+def success_message(state):
+    return b"Correct! Here is your flag:" in state.posix.dumps(sys.stdout.fileno())
+
+def main():
+    proj = angr.Project("./read_it")
+
+    user_data_in_bytes = 64
+    user_data = claripy.BVS("message", user_data_in_bytes*8)
+
+    init_state = proj.factory.entry_state(stdin=user_data)
+
+    # Ensure user_data is printable
+    for i in range(user_data_in_bytes):
+        init_state.solver.add(
+            claripy.Or(*(
+                user_data.get_byte(i) == x
+                for x in string.printable.encode('utf-8')
+            ))
+        )
+
+    # Prepare simulation
+    simulation = proj.factory.simgr(init_state, veritesting=True)
+
+    # Get address of read_and_print_flag function
+    print_flag_addr = proj.loader.find_symbol("read_and_print_flag").rebased_addr
+    simulation.explore(find=print_flag_addr, avoid=failure_message)
+
+    # Another way:
+    # simulation.explore(find=success_message, avoid=failure_message)
+
+    if not simulation.found:
+        print("NOT FOUND")
+        hook(locals())
+    
+    for solution_state in simulation.found:
+        solution = solution_state.solver.eval(user_data, cast_to=bytes)
+        # solution = solution_state.posix.stdin.concretize()
+        print(solution)
+
+if __name__=="__main__":
+    main()
+```
+</Collapse>
+
+## Into the Metaverse
+
+### Analyze the Binary
+
+Initially, load the binary `./metaverse` and press `F5` to get the pseudo-code in IDA. In `main`, we can see that it reads input from `stdin` with the size of **64 bytes**. Then there is a function `strcspn()`, which returns the length of **user_input** until reaching the first `\n`. If the character `\n` is included in our **user_input**, it will be replaced by the terminating character `\x00`.
+
+![ITM-pseudo-main](/image/angr-note/ITM-pseudo-code-main-1.png)
+
+For further reading about `strcspn()`, you can visit this link: <a href="https://cplusplus.com/reference/cstring/strcspn/" target="_blank">strcspn()</a>
+
+There are also a bunch of **if-else** and **switch cases** inside `main`, which do some magic there and then call a series of `sub` functions depending on the value of `v3` and `v4`.
+
+![ITM-pseudo-code-main](/image/angr-note/ITM-pseudo-code-main-2.png)
+
+![ITM-pseudo-code-main](/image/angr-note/ITM-pseudo-code-main-3.png)
+
+By chance, when checking each of the `sub` functions, I find the `sub_F3E()` which prints the success or failure message.
+
+![ITM-print_flag-function](/image/angr-note/ITM-print_flag-function.png)
+
+So, our goal is asking **angr** to create for us an input, which satisfies all the conditions and comes up to the path containing the string **"Flag Captured!"**.
+
+### Build the script
+
+As usual, let's import all the necessary libraries, use the **LOGGING INFO** and IPython debugging view, and have a quick check to see if our script is running correctly.
+
+```python
+import angr 
+import logging 
+import claripy
+import string
+import sys
+
+logging.getLogger("angr").setLevel(logging.INFO)
+
+def hook(l=None):
+    if l:
+        locals().update(l)
+    import IPython
+    IPython.embed(banner1='', exit_msg='', confirm_exit=False)
+    exit(0)
+
+proj = angr.Project("./metaverse")
+hook(locals())
+```
+
+![ITM-check-script](/image/angr-note/ITM-check-script.png)
+
+Everything is ready, now let's take the advantage of **IPython debugging view** to create and run a **Simulation Manager** to see can we **reach the deadended**. Who knows, may be we get the answer :D 
+
+![ITM-simulation-manager](/image/angr-note/ITM-simulation-manager.png)
+
+Nice, we reach the **deadended**.
+
+![ITM-reach-deadended](/image/angr-note/ITM-reach-deadended.png)
+
+Let's see what we have here! Here, I use `posix` to let me call directly to `.stdin`. But why `stdin` here? 
+
+For simplication, just think about **Client-Server Communication**, where **Server** transfers data to **Client**. That data is printed to the terminal, so in context of `posix`, we use `stdout`. On the other hand, when **Client** transfers data to **Server**, we must type data to the terminal, so again, we use `stdin` in `posix`.
+
+![ITM-read-deadended](/image/angr-note/ITM-read-deadended.png)
+
+And for the outputs which we get, **both the inputs are wrong!**
+
+![ITM-check-output-deadended](/image/angr-note/ITM-check-output.png)
+
+If you look closely at the **first input**, there is a series of `\x00` inside the payload. This is the undefined behaviour of `strcspn()` in **angr**. 
+
+In terms of `strcspn()`, it must read the **concrete value** so that it can find where the character `\n` appears in the input. But in case of **angr**, our input is compiled into **symbolic value**, which means we **don't have the concrete value!** So when **angr** is running, `strcspn()` by default might add tons of `\x00` characters into the input as **any symbolic value from the input** could be a `\n`.
+
+To solve this, we will create **a hook** for `strcspn()` function. In my case, I will hook only 5 bytes for the call to `strcspn()` with a `nop()` function returning the size of our input (we can return a random size but should be large enough).
+
+![ITM-hook-strcspn](/image/angr-note/ITM-hook-strcspn.png)
+
+Here is how I implement that.
+
+```python 
+def nop(state):
+    state.regs.rax=64 # return the size of input
+
+addr_to_hook = 0x400FEF
+proj.hook(addr=addr_to_hook, hook=nop, length=5)
+```
+
+To make our **angr** script faster, we can include the path where we want to stop or avoid.
+
+![ITM-where-to-go](/image/angr-note/ITM-where-to-go.png)
+
+```python
+def success_message(state):
+    return b"Flag Captured!" in state.posix.dumps(sys.stdout.fileno())
+
+def failure_message(state):
+    return b"Wrong!" in state.posix.dumps(sys.stdout.fileno())
+
+init_state = proj.factory.entry_state()
+simulation = proj.factory.simgr(init_state)
+simulation.explore(find=success_message, avoid=failure_message)
+
+if not simulation.found:
+    print("NOT FOUND")
+    hook(locals())
+
+for solution_state in simulation.found:
+    solution = solution_state.posix.stdin.concretize()
+    print("Flag:", solution)
+```
+
+Run the script and we have the flag.
+
+![ITM-flag](/image/angr-note/ITM-flag.png)
+
+### Solution
+
+<Collapse title="Into The Metaverse Final Script">
+```python 
+import angr 
+import logging 
+import claripy
+import string
+import sys
+
+logging.getLogger("angr").setLevel(logging.INFO)
+
+def hook(l=None):
+    if l:
+        locals().update(l)
+    import IPython
+    IPython.embed(banner1='', exit_msg='', confirm_exit=False)
+    exit(0)
+
+def success_message(state):
+    return b"Flag Captured!" in state.posix.dumps(sys.stdout.fileno())
+
+def failure_message(state):
+    return b"Wrong!" in state.posix.dumps(sys.stdout.fileno()) 
+
+def nop(state):
+    state.regs.rax=0x40
+
+def main():
+    proj = angr.Project("./metaverse")
+
+    # Create hook
+    addr_to_hook = 0x400FEF
+    proj.hook(addr=addr_to_hook, hook=nop, length=5)
+
+    # Start init_state
+    init_state = proj.factory.entry_state()
+        
+    # Prepare simulation
+    simulation = proj.factory.simgr(init_state)
+    simulation.explore(find=success_message, avoid=failure_message)
+
+    # NOT FOUND
+    if not simulation.found:
+        print("NOT FOUND")
+        hook(locals())
+
+    # FOUND => concretize the input to get the concrete input
+    for solution_state in simulation.found:
+        solution_password = solution_state.posix.stdin.concretize()
+        print("Flag:", solution_password)
+
+if __name__=="__main__":
+    main()
+```
+</Collapse>
+
+## 00_angr_find
+
+### Analyze the Binary
+
+After loading the binary `./00_angr_find` into IDA, we can see that the `main` is really short and straightforward. We are asked to **enter an 8-byte user input**. Then each character from our input is passed into a function named `complex_funcion`, which does some math if those characters are between `A` and `Z`. Finally, the encoded input is compared to the hard-coded string `JACEJGCS` to get the success message.
+
+![00_angr_find-pseudo-code-main](/image/angr-note/00-pseudo-code-main.png)
+
+![00_angr_find-complex-function](/image/angr-note/00-complex-function.png)
+
+So, in general, we will create an **angr script** which leads us to the success message.
+
+### Build the script
+
+As usual, I import all the necessary libraries, use the **LOGGING INFO** and IPython debugging view, and have a quick check to see if our script is running correctly.
+
+```python
+import angr 
+import logging 
+
+logging.getLogger("angr").setLevel(logging.INFO)
+
+def hook(l=None):
+    if l:
+        locals().update(l)
+    import IPython
+    IPython.embed(banner1='', exit_msg='', confirm_exit=False)
+    exit(0)
+
+proj = angr.Project("../problems/00_angr_find")
+hook(locals())
+```
+
+![00-test-run](/image/angr-note/00-test-run.png)
+
+Now, we will create an **initial state** using `entry_state()`, where it loads all the registers, sets up the stack, heap, ... as the real program for us. Then we pass it into **Simulation Manager** and try to force **angr** to go to the path of success message. In this case, we try to find the address where it prints the success message, or `puts()`.
+
+![00-success-failure](/image/angr-note/00-success-failure.png)
+
+![00-simulation](/image/angr-note/00-simulation.png)
+
+Nice, we have `1 found`, meaning we successfully find the path to the success message.
+
+![00-found](/image/angr-note/00-found.png)
+
+Let's read the input from `stdin` and we have the required input!
+
+![00-read-input](/image/angr-note/00-read-input.png)
+
+![00-solution](/image/angr-note/00-solution.png)
+
+### Solution
+
+<Collapse title="00_angr_find Final Script">
+```python 
+import angr
+import logging 
+
+logging.getLogger("angr").setLevel(logging.INFO)
+
+def hook(l=None):
+    if l:
+        locals().update(l)
+    import IPython
+    IPython.embed(banner1='', exit_msg='', confirm_exit=False)
+    exit(0)
+
+def main():
+    proj = angr.Project("../problems/00_angr_find")
+
+    # Prepare simulation
+    init_state = proj.factory.entry_state()
+    simulation = proj.factory.simgr(init_state)
+
+    # Find success message
+    print_success_addr = 0x0804867D
+    print_failure_addr = 0x0804866B
+    simulation.explore(find=print_success_addr, avoid=print_failure_addr)
+
+    # If found -> Read the input from stdin
+    if simulation.found:
+        for s in simulation.found:
+            flag = s.posix.stdin.concretize()
+            print("Flag: ", flag)
+    else:
+        print("NOT FOUND")
+        hook(locals())
+
+if __name__=="__main__":
+    main()
+```
+</Collapse>
+
+## 01_angr_avoid
+
+### Analyze the Binary
+
+The `main` of this challenge is way too big, IDA can't even decompile the `main` xD. Nevermind, let's head to the `main`. We see that it asks us to enter **an 8-byte user input**. Then each character from user input is encoded by the the `complex_function()`.
+
+![01-user-input](/image/angr-note/01-user-input.png)
+
+![01-encoded-user-input](/image/angr-note/01-encoded-user-input.png)
+
+Then there are tons of maths, comparisions, and jumps to many different labels.
+
+![01-maths](/image/angr-note/01-maths-1.png)
+
+Sorry, the `main` is just too big, I can't give you all the way it looks, but in general, each jump to label will eventually land into a function named `avoid_me`.
+
+![01-label](/image/angr-note/01-label-specific.png)
+
+For `avoid_me`, it just sets variable `should_succeed` to zero.
+
+![01-avoid-me](/image/angr-note/01-avoid-me.png)
+
+Furthermore, in `main`, there is call to `maybe_good`, where we get the success message only if `should_succeed` and comparision between `s1` and `s2` are true.
+
+![01-maybe-good](/image/angr-note/01-maybe-good.png)
+
+Clearly, the success message is prevented by the `avoid_me` function. So for running in **angr**, we will avoid that function, and the address that prints the failure message.
+
+![01-failure-message](/image/angr-note/01-failure-message.png)
+
+### Build the script
+
+Let's import libraries, use **LOGGING INFO** and IPython debugging view, and test to see if our script is running correctly.
+
+```python 
+import angr 
+import logging 
+import sys
+
+logging.getLogger("angr").setLevel(logging.INFO)
+
+def hook(l=None):
+    if l:
+        locals().update(l)
+    import IPython
+    IPython.embed(banner1='', exit_msg='', confirm_exit=False)
+    exit(0)
+
+proj = angr.Project("../problems/01_angr_avoid")
+hook(locals())
+```
+
+![01-test-script](/image/angr-note/01-test-script.png)
+
+Now, we create **initial state** and pass it into **Simulation Manager**.
+
+![01-simulation](/image/angr-note/01-simulation.png)
+
+Next, we force **angr** into finding the success message, and avoid `avoid_me` function + failure message. We can use the syntax below to find the `avoid_me` function in the binary.
+
+```python 
+<func_name> = proj.loader.find_symbol("<func_name>").rebased_addr
+```
+
+![01-find-avoid](/image/angr-note/01-find-avoid.png)
+
+![01-success-failure-addr](/image/angr-note/01-success-failure-addr.png)
+
+We have `1 found`, our script is running greate :D 
+
+![01-found](/image/angr-note/01-found.png)
+
+Let's read the input and we have the flag 
+
+![01-input](/image/angr-note/01-input.png)
+
+![01-solution](/image/angr-note/01-solution.png)
+
+### Solution 
+
+<Collapse title="01_angr_avoid Final Script">
+```python 
+import angr 
+import logging 
+import sys
+
+logging.getLogger("angr").setLevel(logging.INFO)
+
+def hook(l=None):
+    if l:
+        locals().update(l)
+    import IPython
+    IPython.embed(banner1='', exit_msg='', confirm_exit=False)
+    exit(0)
+
+def main():
+    proj = angr.Project("../problems/01_angr_avoid")
+
+    # Prepare simulation
+    init_state = proj.factory.entry_state()
+    simulation = proj.factory.simgr(init_state)
+
+    # avoid_me() address 
+    avoid_me = proj.loader.find_symbol("avoid_me").rebased_addr
+
+    # Run simulation, avoid avoid_me() and failure message
+    simulation.explore(find=0x080485E5, avoid=[avoid_me, 0x080485F7])
+
+    # NOT FOUND
+    if not simulation.found:
+        print("NOT FOUND")
+        hook(locals())
+
+    # FOUND 
+    for solution_state in simulation.found:
+        print(solution_state.posix.stdin.concretize())
+
+if __name__=="__main__":
+    main()
+```
+</Collapse>
+
+## 02_angr_find_condition
+
+### Analyze the Binary
+
+After loading the binary `02_angr_find_condition` into IDA, here is the pseudo-code of `main`.
+
+![02-pseudo-code-main](/image/angr-note/02-pseudo-code-main.png)
+
+The `main` is short and straightforward. Basically, we encode each character of our **8-byte input** via a function named `complex_funcion`. Then that encoded input is compared to a hard-coded string `VXRRJEUR` stored in variable `s2` to get the success message.
+
+Here is how `complex_function` looks like.
+
+![02-complex_function](/image/angr-note/02-complex_function.png)
+
+So, the general flow of our **angr script** is to create **Simulation Manager**, and find the address of `puts()` function which prints the success message. However, this time, we use another technique which finds the strings **"Good Job."** from `stdout`.
+
+### Build the script
+
+As usual, I load the necessary libraries, use **LOGGING INFO** and IPython debugging view, and test to see if our script is running properly.
+
+```python
+import angr 
+import logging
+import sys
+
+logging.getLogger("angr").setLevel(logging.INFO)
+
+def hook(l=None):
+    if l:
+        locals().update(l)
+    import IPython
+    IPython.embed(banner1='', exit_msg='', confirm_exit=False)
+    exit(0)
+
+proj = angr.Project("../problems/02_angr_find_condition")
+hook(locals())
+```
+
+![02-test-script](/image/angr-note/02-test-script.png)
+
+Our script is perfectly prepared. Now is time to create the **Simulation Manager**.
+
+![02-simulation-manager](/image/angr-note/02-simulation-manager.png)
+
+Here is the technique to find the **success and failure message** from `stdout`.
+
+![02-success-failure-message](/image/angr-note/02-success-failure-message.png)
+
+Then, we will pass these two functions into **Simulation Manager** to let it explore the path to the **success message**. Also, we can avoid the **failure message** to improve the speed of our **angr script**.
+
+![02-simulation-explore](/image/angr-note/02-simulation-explore.png)
+
+We have `1 found`, just read that `found` from `stdin` to get the **user input** and we finish this challenge.
+
+![02-read-password](/image/angr-note/02-read-password.png)
+
+![02-solution](/image/angr-note/02-solution.png)
+
+### Solution 
+
+<Collapse title="02_angr_find_condition Final Script">
+```python 
+import angr 
+import logging
+import sys
+
+logging.getLogger("angr").setLevel(logging.INFO)
+
+def hook(l=None):
+    if l:
+        locals().update(l)
+    import IPython
+    IPython.embed(banner1='', exit_msg='', confirm_exit=False)
+    exit(0)
+
+def success_message(state):
+    return b"Good Job." in state.posix.dumps(sys.stdout.fileno())
+
+def failure_message(state):
+    return b"Try again." in state.posix.dumps(sys.stdout.fileno())
+
+def main():
+    proj = angr.Project("../problems/02_angr_find_condition")
+
+    # Prepare simualtion
+    init_state = proj.factory.entry_state()
+    simulation = proj.factory.simgr(init_state)
+
+    # Run simulation to find path to success message
+    simulation.explore(find=success_message, avoid=failure_message)
+
+    # Not found
+    if not simulation.found:
+        print("NOT FOUND")
+        hook(locals())
+
+    # Found => Print input from stdin in simulation
+    for s in simulation.found:
+        solution = s.posix.stdin.concretize()
+        print("Flag: ", solution)
+
+if __name__=="__main__":
+    main()
+```
+</Collapse>
+
+## 03_angr_symbolic_registers
+
+### Analyze the Binary
+
+After loading the binary `03_angr_symbolic_registers` into IDA, there is a call to `get_user_input` where we have to enter 3 inputs.
+
+![03-pseudo-code-main-1.png]
+
+Looking closely at `get_user_input`, our inputs are stored in `ebp+var_10`, `ebp+var_14`, and `ebp+var_18`. Then, those three values are loaded into three registers `edx`, `ebx`, and `eax` respectively.
+
+![03-get_user_input](/image/angr-note/03-get_user_input.png)
+
+After `get_user_input`, the values from the three registers are loaded back into local variables to passed into `complex_function_1`, `complex_function_2`, and `complex_function_3` to do some maths.
+
+![03-after-get_user_input](/image/angr-note/03-after-get_user_input.png)
+
+Finally, we can only get to the **success message** if all of the **three registers are zero**.
+
+![03-condition-check](/image/angr-note/03-condition-check.png)
+
+The goal for this  challenge is to get **the correct three inputs**. However, those **three inputs** are loaded from **three registers** as shown above. To get easier, we should create **three symbolic registers**, and our job is to read the raw data stored in those **symbolic registers**. 
+
+But where should we start our program to create **three symbolic registers**? As we know that inside `get_user_input` function and outside `get_user_input`, we are all loaded data from the three registers.
+
+But our best choice is to create **three symbolic registers** outside `get_user_input`. If we choose to create **three symbolic registers** inside `get_user_input` we have to handle the stack correctly because inside `get_user_input` we have a call to `___stack_chk_fail`.
+
+![03-stack-check-fail](/image/angr-note/03-stack-check-fail.png)
+
+So, the address that we want our **angr script** to start is as below.
+
+![03-start-addr](/image/angr-note/03-start-addr.png)
+
+### Build the script
+
+As usual, I load the necessary libraries, use **LOGGING INFO** and IPython debugging view, and test to see if our script is running properly.
+
+```python 
+import angr 
+import logging 
+import sys
+
+logging.getLogger("angr").setLevel(logging.INFO)
+
+def hook(l=None):
+    if l:
+        locals().update(l)
+    import IPython
+    IPython.embed(banner1='', exit_msg='', confirm_exit=False)
+    exit(0)
+
+proj = angr.Project("../problems/03_angr_symbolic_registers")
+hook(locals())
+```
+
+![03-test-script](/image/angr-note/03-test-script.png)
+
+Now, we will start our **angr script** at address `0x08048980`.
+
+![03-init_state](/image/angr-note/03-init_state.png)
+
+Then we create **three symbolic registers**. Furthermore, the size of each **symbolic register** is 4 bytes since they are loaded into **3 stacks layouts** which have **4 bytes difference**.
+
+![03-size-symbolic-registers](/image/angr-note/03-size-symbolic-registers.png)
+
+![03-create-symbolic](/image/angr-note/03-create-symbolic.png)
+
+Let's force **angr** to find the success path for us by exploring the string **"Good Job."** from `stdout`. To improve the speed, we can avoid the paths lead to the string **"Try again."**.
+
+![03-find-avoid](/image/angr-note/03-find-avoid.png)
+
+We successfully find the solution with `1 found`. Let's concretize **the three symbolic registers** and we should have the passwords for this challenge.
+
+![03-found](/image/angr-note/03-found.png)
+
+Because in the first place, we are asked to enter **hex values**, we must cast it to hex to solve this challenge.
+
+![03-scanf](/image/angr-note/03-scanf.png)
+
+![03-solution](/image/angr-note/03-solution.png)
+
+### Solution
+
+<Collapse title="03_angr_symbolic_registers Final Script">
+```python 
+import angr 
+import logging 
+import sys
+
+logging.getLogger("angr").setLevel(logging.INFO)
+
+def hook(l=None):
+    if l:
+        locals().update(l)
+    import IPython
+    IPython.embed(banner1='', exit_msg='', confirm_exit=False)
+    exit(0)
+
+def success_message(state):
+    return b"Good Job." in state.posix.dumps(sys.stdout.fileno())
+
+def failure_message(state):
+    return b"Try again." in state.posix.dumps(sys.stdout.fileno())
+
+def main():
+    proj = angr.Project("../problems/03_angr_symbolic_registers")
+
+    # Create init_state from address after get_user_input()
+    start_addr = 0x08048980
+    init_state = proj.factory.blank_state(addr=start_addr)
+
+    # Create 3 symbolic variables for simulation (registers)
+    size_in_bytes = 4
+    password1 = init_state.solver.BVS("password1", size_in_bytes*8)
+    password2 = init_state.solver.BVS("password2", size_in_bytes*8)
+    password3 = init_state.solver.BVS("password3", size_in_bytes*8)
+
+    # Write 3 symbolic variables to 3 registers in current state
+    init_state.regs.eax = password1
+    init_state.regs.ebx = password2
+    init_state.regs.edx = password3
+
+    # Up till now, our state is ready
+    # Let's prepare simulation and find the success message
+    simulation = proj.factory.simgr(init_state)
+    simulation.explore(find=success_message, avoid=failure_message)
+
+    # NOT FOUND
+    if not simulation.found:
+        print("NOT FOUND")
+        hook(locals())
+
+    # FOUND ==> Read the password from our 3 pre-created symbolic variables (value inside registers)
+    for s in simulation.found:
+        solution_password1 = s.solver.eval(password1)
+        solution_password2 = s.solver.eval(password2)
+        solution_password3 = s.solver.eval(password3)
+
+        # Print solutions in hex because __isoc99_scanf("%x %x %x", &v1, &v2, v3);
+        print("Flag: ", hex(solution_password1), hex(solution_password2), hex(solution_password3))
+
+if __name__=="__main__":
+    main()
+```
+</Collapse>
+
+## 04_symbolic_stack
+
+### Analyze the Binary
+
+In `main`, we have a function named `handle_user`.
+
+![04-pseudo-code-main](/image/angr-note/04-pseudo-code-main.png)
+
+In this function, we are asked to enter **2 unsigned integers**. Then our inputs will be encoded by `complex_function0` and `complex_function1`, eventually being compared with some hard-coded values to get the success message.
+
+![04-handle-user](/image/angr-note/04-handle-user.png)
+
+![04-handle-user-cmp](/image/angr-note/04-handle-user-cmp.png)
+
+Clearly the two inputs are **stored on the stack** at `ebp-0xc` and `ebp-0x10` respectively. So, in our **angr script**, we can simulation a stack, having the **two stack slots be symbolic variables**.
+
+### Build the script
+
+Let's import necessary libraries, use **LOGGING INFO** and IPython debugging view.
+
+```python
+import angr 
+import logging
+import sys
+
+logging.getLogger("angr").setLevel(logging.INFO)
+
+def hook(l=None):
+    if l:
+        locals().update(l)
+    import IPython
+    IPython.embed(banner1='', exit_msg='', confirm_exit=False)
+    exit(0)
+
+proj = angr.Project("../problems/04_angr_symbolic_stack")
+hook(locals())
+```
+
+We already know that `scanf` stores two inputs onto the stack, so in **angr script**, the starting address should be after the `scanf` call and **stack clean up**. 
+
+![04-start-address](/image/angr-note/04-start-address.png)
+
+```python
+start_addr = 0x08048697
+init_state = proj.factory.blank_state(addr=start_addr)
+```
+
+Right at the starting address `0x08048697`, we will simulate the stack. As shown above, the inputs are stored at `ebp-0xc` and `ebp-0x10`, so our stack should also need to have two **symbolic variables** at `ebp-0xc` and `ebp-0x10`.
+
+Stack looks like this.
+
+![04-stack](/image/angr-note/04-stack.png)
+
+Also the **padding length** for **first input** is 8 bytes.
+
+```python
+size_in_bytes = 4
+password1 = init_state.solver.BVS("password1", size_in_bytes*8)
+password2 = init_state.solver.BVS("password2", size_in_bytes*8)
+
+# Setup the stack
+init_state.regs.ebp = init_state.regs.esp
+stack_padding = 0x8
+init_state.regs.esp -= stack_padding
+
+# Insert password1 and password2 into stack
+init_state.stack_push(password1)
+init_state.stack_push(password2)
+```
+
+Up to this point, the stack is ready. It's time to prepare simulation and find success message.
+
+```python
+def success_message(state):
+    return b"Good Job." in state.posix.dumps(sys.stdout.fileno())
+
+def failure_message(state):
+    return b"Try again." in state.posix.dumps(sys.stdout.fileno())
+
+simulation = proj.factory.simgr(init_state)
+simulation.explore(find=success_message, avoid=failure_message)
+```
+
+Run the script and we successfully have `1 found`. Let's **concretize symbolic variables**.
+
+![04-found](/image/angr-note/04-found.png)
+
+![04-solution](/image/angr-note/04-solution.png)
+
+### Solution
+
+<Collapse title="04_angr_symbolic_stack Final Script">
+```python 
+import angr 
+import logging
+import sys
+
+logging.getLogger("angr").setLevel(logging.INFO)
+
+def hook(l=None):
+    if l:
+        locals().update(l)
+    import IPython
+    IPython.embed(banner1='', exit_msg='', confirm_exit=False)
+    exit(0)
+
+def success_message(state):
+    return b"Good Job." in state.posix.dumps(sys.stdout.fileno())
+
+def failure_message(state):
+    return b"Try again." in state.posix.dumps(sys.stdout.fileno())
+
+def main():
+    proj = angr.Project("../problems/04_angr_symbolic_stack")
+
+    # Create init_state with start address after stack clean up and scanf 
+    # because we don't want to make symbolic scanf :>
+    start_addr = 0x08048697
+    init_state = proj.factory.blank_state(addr=start_addr)
+
+    # Create 2 symbolic variables holding symbolic values :P
+    # These 2 variables will replace 2 stack slots
+    size_in_bytes = 4
+    password1 = init_state.solver.BVS("password1", size_in_bytes*8)
+    password2 = init_state.solver.BVS("password2", size_in_bytes*8)
+
+    # Stack looks like this:
+    #    -----------
+    #   |           | ebp - 0x4
+    #    -----------
+    #   |           | ebp - 0x8
+    #    -----------
+    #   | password1 | ebp - 0xC
+    #    -----------
+    #   | password2 | ebp - 0x10
+    #    -----------
+    #
+    # ===> padding for password1 in stack is 0x8 :>
+
+
+    # Setup the stack
+    init_state.regs.ebp = init_state.regs.esp
+    stack_padding = 0x8
+    init_state.regs.esp -= stack_padding
+
+    # Insert password1 and password2 into stack
+    init_state.stack_push(password1)
+    init_state.stack_push(password2)
+
+    # Up to this point, stack is ok
+    # => Prepare simulation and find the success message
+    simulation = proj.factory.simgr(init_state)
+    simulation.explore(find=success_message, avoid=failure_message)
+
+    # NOT FOUND
+    if not simulation.found:
+        print("NOT FOUND")
+        hook(locals())
+
+    # FOUND => print value in the stack from 2 symbolic variables
+    for s in simulation.found:
+        solution_password1 = s.solver.eval(password1)
+        solution_password2 = s.solver.eval(password2)
+        print("Flag: ", solution_password1, solution_password2)
+
+if __name__=="__main__":
+    main()
+```
+</Collapse>
+
+## 05_angr_symbolic_memory
+
+### Analyze the Binary
+
+First of all, in `main`, we are asked to enter **four string inputs** stored in `unk_A1BA1D8`, `unk_A1BA1D0`, `unk_A1BA1C8`, and `user_input`.
+
+![05-main-scanf](/image/angr-note/05-main-scanf.png)
+
+Also, the four locations to store inputs are in the `.bss` section, meaning they are **uninitialized**.
+
+![05-bss](/image/angr-note/05-bss.png)
+
+Furthermore, **the four inputs** will be encoded by `complex_function` if each of their character in range `[A-Z]`. After that, they are compared with a hard-coded string `NJPURZPCDYEAXCSJZJMPSOMBFDDLHBVN` to get the success message.
+
+![05-main-for](/image/angr-note/05-main-for.png)
+
+![05-complex-function](/image/angr-note/05-complex-function.png)
+
+So, in this challenge, we move on to a new technique, where we will create **four symbolic variables** and assign them into **four memory addresses in the `.bss` section** via the syntax below.
+
+```python
+state.memory.store(<addr>, <symbolic_variable>)
+```
+
+### Build the script 
+
+Let's start importing necessary libraries, using **LOGGING INFO**, and IPython debugging view.
+
+```python
+import angr 
+import logging 
+import sys 
+
+logging.getLogger("angr").setLevel(logging.INFO)
+
+def hook(l=None):
+    if l:
+        locals().update(l)
+    import IPython
+    IPython.embed(banner1='', exit_msg='', confirm_exit=False)
+    exit(0)
+```
+
+We then create **angr project** and **initial state** with the starting address after `scanf` and **stack clean up**.
+
+![05-proj-start-addr](/image/angr-note/05-proj-start-addr.png)
+
+```python 
+proj = angr.Project("../problems/05_angr_symbolic_memory")
+
+start_addr = 0x08048601
+init_state = proj.factory.blank_state(addr=start_addr)
+```
+
+Now, we create **symbolic variables** and stores them into **uninitialized memory locations** in the `.bss` section.
+
+```python 
+size_in_bytes = 8
+password1 = init_state.solver.BVS("password1", size_in_bytes*8)
+password2 = init_state.solver.BVS("password2", size_in_bytes*8)
+password3 = init_state.solver.BVS("password3", size_in_bytes*8)
+password4 = init_state.solver.BVS("password4", size_in_bytes*8)
+
+init_state.memory.store(0x0A1BA1C0, password1)
+init_state.memory.store(0x0A1BA1C8, password2)
+init_state.memory.store(0x0A1BA1D0, password3)
+init_state.memory.store(0x0A1BA1D8, password4)
+```
+
+Finally, we force **angr** to find path to the **success message**. If we find the solution, **concretize the symbolic variables**. Since we are finding the **string**, we need to use `cast_to=bytes`.
+
+```python 
+def success_message(state):
+    return b"Good Job." in state.posix.dumps(sys.stdout.fileno())
+
+def failure_message(state):
+    return b"Try again." in state.posix.dumps(sys.stdout.fileno())
+
+simulation = proj.factory.simgr(init_state)
+simulation.explore(find=success_message, avoid=failure_message)
+
+if not simulation.found:
+    print("NOT FOUND")
+    hook(locals())
+
+for solution_state in simulation.found:
+    solution_password1 = solution_state.solver.eval(password1, cast_to=bytes)
+    solution_password2 = solution_state.solver.eval(password2, cast_to=bytes)
+    solution_password3 = solution_state.solver.eval(password3, cast_to=bytes)
+    solution_password4 = solution_state.solver.eval(password4, cast_to=bytes)
+    print("Flag:", solution_password1, solution_password2, solution_password3, solution_password4)   
+```
+
+Run the script and we get the flag.
+
+![05-solution](/image/angr-note/05-solution.png)
+
+### Solution 
+
+<Collapse title="05_angr_symbolic_memory Final Script">
+```python 
+import angr 
+import logging 
+import sys
+
+logging.getLogger("angr").setLevel(logging.INFO)
+
+def hook(l=None):
+    if l:
+        locals().update(l)
+    import IPython
+    IPython.embed(banner1='', exit_msg='', confirm_exit=False)
+    exit(0)
+
+def success_message(state):
+    return b"Good Job." in state.posix.dumps(sys.stdout.fileno())
+
+def failure_message(state):
+    return b"Try again." in state.posix.dumps(sys.stdout.fileno())
+
+def main():
+    proj = angr.Project("../problems/05_angr_symbolic_memory")
+
+    # Create init_state with starting address after the scanf() and stack cleanup
+    start_addr = 0x08048601
+    init_state = proj.factory.blank_state(addr=start_addr)
+
+    # Create 4 symbolic variables for this:
+    # __isoc99_scanf("%8s %8s %8s %8s", user_input, &unk_A1BA1C8, &unk_A1BA1D0, &unk_A1BA1D8);
+    size_in_bytes = 0x8
+    password1 = init_state.solver.BVS("password1", size_in_bytes*8)
+    password2 = init_state.solver.BVS("password2", size_in_bytes*8)
+    password3 = init_state.solver.BVS("password3", size_in_bytes*8)
+    password4 = init_state.solver.BVS("password4", size_in_bytes*8)
+
+    # Using these 4 symbolic variables to overwrite 4 memory slots 
+    # (memory of those 4 variables in actual program)
+    init_state.memory.store(0x0A1BA1C0, password1)
+    init_state.memory.store(0x0A1BA1C8, password2)
+    init_state.memory.store(0x0A1BA1D0, password3)
+    init_state.memory.store(0x0A1BA1D8, password4)
+
+    # Prepare simulation
+    simulation = proj.factory.simgr(init_state)
+    simulation.explore(find=success_message, avoid=failure_message)
+
+    # NOT FOUND
+    if not simulation.found:
+        print("NOT FOUND")
+        hook(locals())
+
+    # FOUND => print string from symbolic variables (using cast_to=bytes)
+    for s in simulation.found:
+        solution_password1 = s.solver.eval(password1, cast_to=bytes)
+        solution_password2 = s.solver.eval(password2, cast_to=bytes)
+        solution_password3 = s.solver.eval(password3, cast_to=bytes)
+        solution_password4 = s.solver.eval(password4, cast_to=bytes)
+        print("Flag: ", solution_password1, solution_password2, solution_password3, solution_password4)
+
+if __name__=="__main__":
+    main()
+```
+</Collapse>
+
+## 06_angr_symbolic_dynamic_memory
+
+### Analyze the Binary
+
+The pseudo-code of `main` in IDA is straightforward, we are reading string inputs into memory locations allocated by `malloc`. If each character of those inputs is in range `[A-Z]`, they will be encoded by function `complex_function`. Then the two encoded strings are compared to **two hard-coded strings**, `UODXLZBI` and `UAORRAYF` to get the success message.
+
+![06-main](/image/angr-note/06-main.png)
+
+![06-complex_function](/image/angr-note/06-complex_function.png)
+
+This is quite similar to challenge `05_angr_symbolic_memory` right? :D 
+
+However, this time, we **cannot** directly **write symbolic variables to memory locations** because they are allocated by `malloc` (heap addresses, not addresses in `.bss`)
+
+Instead, we can **overwrite the pointer**. This means, **overwriting the pointer to make it point to our symbolic variables**. 
+
+This can be achieved by **creating fake heap addresses** &rarr; **link our symbolic variables to that fake heap addresses** &rarr; **make `buffer0` and `buffer1` pointers point to our fake heap addresses**.
+
+### Build the script
+
+Let's import necessary libraries, use **LOGGING INFO** and IPython debugging view.
+
+```python
+import angr 
+import logging 
+import sys
+
+logging.getLogger("angr").setLevel(logging.INFO)
+
+def hook(l=None):
+    if l:
+        locals().update(l)
+    import IPython
+    IPython.embed(banner1='', exit_msg='', confirm_exit=False)
+    exit(0)
+```
+
+Then, we create **angr project** and **initial state** starting at address `0x080486A0` **(after `scanf` and stack clean up)**. 
+
+The reason is that we create **symbolic variables** to replace the actual contents of `buffer0` and `buffer1`, so we need to start at address after `scanf`, meaning before that our **angr** doesn't have any data related to actual program `buffer0` and `buffer1`.
+
+On the other hand, if we use `entry_state()`, this means we already have `buffer0` and `buffer1` data of actual program, and our **symbolic variables** related to `buffer0` and `buffer1` running parallel. This might **corrupt the working of angr**.
+
+![06-start-addr](/image/angr-note/06-start-addr.png)
+
+```python
+proj = angr.Project("../problems/06_angr_symbolic_dynamic_memory")
+
+start_addr = 0x08048699
+init_state = proj.factory.blank_state(addr=start_addr)
+```
+
+Now, let's create **symbolic variables** and link them to **fake heap addresses**. After that, we link `buffer0` and `buffer1` pointers point to those fake heap addresses. 
+
+```python 
+size_in_bytes = 8
+password1 = init_state.solver.BVS("password1", size_in_bytes*8)
+password2 = init_state.solver.BVS("password2", size_in_bytes*8)
+
+fake_heap_addr = 0x0ABCC8C0
+buffer0_addr = 0x0ABCC8A4
+buffer1_addr = 0x0ABCC8AC
+
+init_state.memory.store(buffer0_addr, fake_heap_addr, endness=proj.arch.memory_endness)
+init_state.memory.store(buffer1_addr, fake_heap_addr+9, endness=proj.arch.memory_endness)
+
+init_state.memory.store(fake_heap_addr, password1)
+init_state.memory.store(fake_heap_addr+9, password2)
+```
+
+Here I use the **unuse memory** from hex view for **fake heap address**.
+
+![06-hex-view](/image/angr-note/06-hex.png)
+
+Finally, we force **angr** to find the path to success message.
+
+```python 
+def success_message(state):
+    return b"Good Job." in state.posix.dumps(sys.stdout.fileno())
+
+def failure_message(state):
+    return b"Try again." in state.posix.dumps(sys.stdout.fileno())
+
+simulation = proj.factory.simgr(init_state)
+simulation.explore(find=success_message, avoid=failure_message)
+
+if not simulation.found:
+    print("NOT FOUND")
+    hook(locals())
+
+for solution_state in simulation.found:
+    solution_password1 = solution_state.solver.eval(password1, cast_to=bytes)
+    solution_password2 = solution_state.solver.eval(password2, cast_to=bytes)
+    print("Flag:", solution_password1, solution_password2)
+```
+
+We successfully have the flag.
+
+![06-solution](/image/angr-note/06-solution.png)
+
+### Solution
+
+<Collapse title="06_angr_symbolic_dynamic_memory Final Script">
+```python 
+import angr
+import logging 
+import sys
+
+logging.getLogger("angr").setLevel(logging.INFO)
+
+def hook(l=None):
+    if l:
+        locals().update(l)
+    import IPython
+    IPython.embed(banner1='', exit_msg='', confirm_exit=False)
+    exit(0)
+
+def success_message(state):
+    return b"Good Job." in state.posix.dumps(sys.stdout.fileno())
+
+def failure_message(state):
+    return b"Try again." in state.posix.dumps(sys.stdout.fileno())
+
+def main():
+    proj = angr.Project("../problems/06_angr_symbolic_dynamic_memory")
+
+    # Create init_state with start address after call to scanf() and stack clean up
+    start_addr = 0x08048699
+    init_state = proj.factory.blank_state(addr=start_addr)
+
+
+    # ------------------- IDEA --------------------
+    # We can't overwrite memory with symbolic variables
+    # because in this challenge, variables are dynamically allocated
+    
+    # Instead, we can overwrite the pointer
+    # This means, overwriting the pointer to make it point to our symbolic variables
+
+    # This can be achieved by creating fake heap addresses,
+    # link our symbolic variables to that fake heap addresses.
+    # Make dynamic pointers point to our fake heap addresses.
+
+
+    # Address of 2 dynamic pointers + fake heap address (unuse memory in hex views)
+    fake_heap_addr = 0x0ABCC8C0
+    buffer0_addr = 0x0ABCC8A4
+    buffer1_addr = 0x0ABCC8AC
+
+    # Create 2 symbolic variables
+    size_in_bytes = 0x8
+    password1 = init_state.solver.BVS("password1", size_in_bytes*8)
+    password2 = init_state.solver.BVS("password2", size_in_bytes*8)
+
+    # Make 2 dynamic pointers point to our fake heap address (remember the endianess)
+    init_state.memory.store(buffer0_addr, fake_heap_addr, endness=proj.arch.memory_endness)
+    init_state.memory.store(buffer1_addr, fake_heap_addr+9, endness=proj.arch.memory_endness)
+
+    # Link symbolic variables to fake heap address memory
+    init_state.memory.store(fake_heap_addr, password1)
+    init_state.memory.store(fake_heap_addr+9, password2)
+
+    # Now everything is ready, let's prepare simulation and run
+    simulation = proj.factory.simgr(init_state)
+    simulation.explore(find=success_message, avoid=failure_message)
+
+    # NOT FOUND
+    if not simulation.found:
+        print("NOT FOUND")
+        hook(locals())
+
+    # FOUND => print string input from symbolic variables
+    for s in simulation.found:
+        solution_password1 = s.solver.eval(password1, cast_to=bytes)
+        solution_password2 = s.solver.eval(password2, cast_to=bytes)
+        print("Flag: ", solution_password1, solution_password2)
+
+if __name__=="__main__":
+    main()
+```
+</Collapse>
+
+## 07_angr_symbolic_file
+
+### Analyze the Binary
+
+Here is the pseudo-code of `main` from IDA. 
+
+![07-main-pseudo-code](/image/angr-note/07-main-pseudo-code.png)
+
+We are asked to enter **a 64-byte password**, and it is passed into the `ignore_me` function.
+
+![07-ignore_me](/image/angr-note/07-ignore_me.png)
+
+Clearly our input is writtent to the file `OJKSQYDP.txt`.
+
+However, only **8 bytes of our input** is encoded and compared to the string `AQWLCTXB` to get the success message even though we are asked to enter **64-byte input**.
+
+![07-encoded-input](/image/angr-note/07-encoded-input.png)
+
+In this challenge, we will create **a symbolic file**. The **file content** should also be **symbolic**, with **the length of 8 bytes** since only **8 bytes of our file content is compared to the string `AQWLCTXB`**. When reaching the success message, our job is to **concretize the symbolic file content**!
+
+### Build the script
+
+Like normal, we start by importing necessary libraries, use **LOGGING INFO** and IPython debugging view.
+
+```python
+import angr 
+import logging 
+import sys
+
+logging.getLogger("angr").setLevel(logging.INFO)
+
+def hook(l=None):
+    if l:
+        locals().update(l)
+    import IPython
+    IPython.embed(banner1='', exit_msg='', confirm_exit=False)
+    exit(0)
+```
+
+Then, we create **angr project** and **find an address** to **start angr**.
+
+```python
+proj = angr.Project("../problems/07_angr_symbolic_file")
+
+# Create init_state with start address after scanf() and stack clean up
+start_addr = 0x080488D3
+init_state = proj.factory.blank_state(addr=start_addr)
+```
+
+But why choosing starting address `0x080488D3`?
+
+Normally, we will choose address `0x080488C4`, which is after `scanf` and **stack cleanup**.
+
+![07-start-addr](/image/angr-note/07-start-addr.png)
+
+However, if we start from this address, **angr** will go into the function `ignore_me`. Inside this function, there is a call to `fscanf`, which requires **concrete value of stream (content of `OJKSQYDP.txt`) to write to variable `s`**.
+
+![07-fscanf](/image/angr-note/07-fscanf.png)
+
+Like we have said before, we create **symbolic file content** to **symbolic file**. This means content of `OJKSQYDP.txt` at that moment is **symbolic**, where `fscanf` requires **concrete value of file content**. This has raised an error as shown below.
+
+![07-error](/image/angr-note/07-error.png)
+
+Back to our script, the next thing we should do is to create **symbolic file content with length of 8 bytes** and a **simulation file**.
+
+```python
+# File name & file size
+file_name = "OJKSQYDP.txt"
+file_size = 0x40
+
+# Create symbolic variable (content of our symbolic file)
+size_in_bytes = 0x8
+password = init_state.solver.BVS("password", size_in_bytes*8) # because strncmp(buffer, "AQWLCTXB", 9u)
+
+# Create symbolic file, link file's content to symbolic variable
+password_file = angr.SimFile(name=file_name, content=password, size=file_size)
+```
+
+Now, we add **symbolic file** into our **state file system**, where there is a link between `file_name` and **symbolic file**.
+
+```python
+init_state.fs.insert(file_name, password_file)
+```
+
+&#10233; This means that when **angr** does things like `open(file_name)` &#10233; it will **dereference the symbolic file**.
+
+Finally, we prepare **Simulation Manager** and **find the success message**.
+
+```python
+def success_message(state):
+    return b"Good Job." in state.posix.dumps(sys.stdout.fileno())
+
+def failure_message(state):
+    return b"Try again." in state.posix.dumps(sys.stdout.fileno())
+
+# NOT FOUND
+if not simulation.found:
+    print("NOT FOUND")
+    hook(locals())
+
+# FOUND => print file "OJKSQYDP.txt" content from symbolic variable (symbolic file content)
+for s in simulation.found:
+    solution_file_content = s.solver.eval(password, cast_to=bytes)
+    print("Flag: ", solution_file_content)
+```
+
+Run the script and we get the flag.
+
+![07-solution.png](/image/angr-note/07-solution.png)
+
+### Solution
+
+<Collapse title="07_angr_symbolic_file Final Script">
+```python 
+import angr 
+import logging 
+import sys
+
+logging.getLogger("angr").setLevel(logging.INFO)
+
+def hook(l=None):
+    if l:
+        locals().update(l)
+    import IPython
+    IPython.embed(banner1='', exit_msg='', confirm_exit=False)
+    exit(0)
+
+def success_message(state):
+    return b"Good Job." in state.posix.dumps(sys.stdout.fileno())
+
+def failure_message(state):
+    return b"Try again." in state.posix.dumps(sys.stdout.fileno())
+
+def main():
+    proj = angr.Project("../problems/07_angr_symbolic_file")
+
+    # Create init_state with start address after scanf() and stack clean up
+    start_addr = 0x080488D3
+    init_state = proj.factory.blank_state(addr=start_addr)
+
+    # -------------------- IDEA ---------------------
+    # We need to create symbolic variables which is the file content of OJKSQYDP.txt
+    # Furthermore, we have to abort failure message
+
+    # ignore_me() writes input into OJKSQYDP.txt => SHOULD NOT ABORT
+    # So, our idea is to write symbolic content into this file
+    # When file contains symbolic content, it becomes symbolic file :P
+
+    # Then create symbolic file, link this file content to our symbolic variable
+    # After angr find path to success message, we just need to read value 
+    # from symbolic variable and we win the challenge :>
+
+
+    # File name & file size
+    file_name = "OJKSQYDP.txt"
+    file_size = 0x40
+
+    # Create symbolic variable (content of our symbolic file)
+    size_in_bytes = 0x8
+    password = init_state.solver.BVS("password", size_in_bytes*8) # because strncmp(buffer, "AQWLCTXB", 9u)
+
+    # Create symbolic file, link file's content to symbolic variable
+    password_file = angr.SimFile(name=file_name, content=password, size=file_size)
+
+    # Add SymFile into our state file system
+    # where there is a link between file_name and symbolic file
+    # => When angr does things like open(file_name) => it will dereference the symbolic file :D
+    init_state.fs.insert(file_name, password_file)
+
+    # Prepare simulation
+    simulation = proj.factory.simgr(init_state)
+    simulation.explore(find=success_message, avoid=failure_message)
+
+    # NOT FOUND
+    if not simulation.found:
+        print("NOT FOUND")
+        hook(locals())
+
+    # FOUND => print file "OJKSQYDP.txt" content from symbolic variable (symbolic file content)
+    for s in simulation.found:
+        solution_file_content = s.solver.eval(password, cast_to=bytes)
+        print("Flag: ", solution_file_content)
+
+if __name__=="__main__":
+    main()
+```
+</Collapse>
+
+## 08_angr_constraints
+
+### Analyze the Binary
+
+In `main`, a variable `password` stores a 16-byte hard-coded string `AUPDNNPROEZRJWKB`, and we are also asked to enter a 16-byte string stored in `buffer`.
+
+![08-binary-1](/image/angr-note/08-binary-1.png)
+
+![08-binary-2](/image/angr-note/08-binary-2.png)
+
+Then our input `buffer` undergoes a loop which does some math to each character in range `[A-Z]` from function `complex_function`.
+
+![08-binary-4](/image/angr-note/08-main-4.png)
+
+![08-binary-3](/image/angr-note/08-main-3.png)
+
+![08-binary-5](/image/angr-note/08-binary-5.png)
+
+Eventually, there is a call to `check_equals_AUPDNNPROEZRJWKB` function, with `buffer` and `0x10` as arguments. If the return value is 1 (`buffer` and `AUPDNNPROEZRJWKB` are equal), we get the success message.
+
+![08-binary-6](/image/angr-note/08-binary-6.png)
+
+![08-binary-7](/image/angr-note/08-binary-7.png)
+
+In general, the program wants us to enter a string into `buffer`, where after going through obfuscation in `complex_function`, the encoded string is equal to `AUPDNNPROEZRJWKB`.
+
+What we really want is the input value (value of `buffer`), so we create a **symbolic variable** for `buffer`. However, if we just let **angr** go directly straight to the **success message**, **angr** will be extremely slow since function `check_equals_AUPDNNPROEZRJWKB` is checking character by character between `buffer` and `AUPDNNPROEZRJWKB`.
+
+![08-binary-8](/image/angr-note/08-binary-8.png)
+
+A clever way is instead of checking character by character from a loop, we directly **add a constraint** where **`buffer` must be equal to `AUPDNNPROEZRJWKB`**. This way **angr** will remove all the states where **symbolic variable** `buffer` isn't equal to `AUPDNNPROEZRJWKB`, and also avoid that crazy loop.
+
+### Solution
+
+First of all, we create a **hook** (custom function) to overwrite function `check_equals_AUPDNNPROEZRJWKB` to avoid the loop.
+
+```python 
+proj = angr.Project("../problems/08_angr_constraints")
+
+def custom_check_equal(state):
+    buffer_addr = 0x0804A050
+    buffer_val = state.memory.load(buffer_addr, 16) # Load size is in bytes
+
+    password = "AUPDNNPROEZRJWKB"
+
+    state.regs.eax = claripy.If(
+        buffer_val == password,
+        claripy.BVV(1, 4*8),  # true
+        claripy.BVV(0, 4*8)   # false
+    )
+
+addr_to_hook = 0x08048673
+proj.hook(addr=addr_to_hook, hook=custom_check_equal, length=5)
+```
+
+![08-solution-1-2](/image/angr-note/08-solution-1-2.png)
+
+We create **initial state** with `entry_state` to start everything from scratch, then pass it into **Simulation Manager** to find path to the success message.
+
+```python
+def success_message(state):
+    return b"Good Job." in state.posix.dumps(sys.stdout.fileno())
+
+def failure_message(state):
+    return b"Try again." in state.posix.dumps(sys.stdout.fileno())
+
+init_state = proj.factory.entry_state()
+
+simulation = proj.factory.simgr(init_state)
+simulation.explore(find=success_message, avoid=failure_message)
+```
+
+I will test this using **LOGGING INFO** and IPython debugging view.
+
+```python 
+import angr 
+import logging 
+import claripy
+import sys
+
+logging.getLogger("angr").setLevel(logging.INFO)
+
+def hook(l=None):
+    if l:
+        locals().update(l)
+    import IPython
+    IPython.embed(banner1='', exit_msg='', confirm_exit=False)
+    exit(0)
+
+hook(locals())
+```
+
+We have `1 found`. This is our flag, read it from `stdin` and we get it!
+
+![08-solution-1-3](/image/angr-note/08-solution-1-3.png)
+
+![08-solution-1-4](/image/angr-note/08-solutio-1-4.png)
+
+<Info>Another Solution</Info>
+
+I have another solution!
+
+Unlike the previous approach, where we created a `custom_check_equal` function to force angr to **find the correct input from the start**, in this solution we take a different route.
+
+We **add constraint to the symbolic variable** right before the call to `check_equals_AUPDNNPROEZRJWKB`. This constraint helps **angr** narrow down the valid inputs from the possible range of symbolic values, rather than guiding it from the beginning.
+
+You can view the source code for this solution in the link below.
+
+<LinkCard
+  title="Another Solution for 08_angr_constraints"
+  desc="My solution!"
+  url="https://github.com/dathwang/angr-note/blob/master/angr_ctf/solutions/08_angr_constraints.py"
+  img="/image/blog-cover/08-solution.jpg"
+/>
+
+### Final script
+
+<Collapse title="08_angr_constraints Final Script">
+```python 
+import angr 
+import logging 
+import claripy
+import sys
+
+logging.getLogger("angr").setLevel(logging.INFO)
+
+def hook(l=None):
+    if l:
+        locals().update(l)
+    import IPython
+    IPython.embed(banner1='', exit_msg='', confirm_exit=False)
+    exit(0)
+
+# Custom function to overwrite check_equals_AUPDNNPROEZRJWKB()
+def custom_check_equal(state):
+    # Load value of user_data
+    user_data_addr = 0x0804A050
+    load_user_data = state.memory.load(user_data_addr, size=0x10)
+
+    # Password string
+    password_str = "AUPDNNPROEZRJWKB"
+
+    # Return value
+    state.regs.eax = claripy.If(
+        load_user_data == password_str, 
+        claripy.BVV(1, 32), # true
+        claripy.BVV(0, 32)  # false
+    )
+
+def success_message(state):
+    return b"Good Job." in state.posix.dumps(sys.stdout.fileno())
+
+def failure_message(state):
+    return b"Try again." in state.posix.dumps(sys.stdout.fileno())
+
+def main():
+    proj = angr.Project("../problems/08_angr_constraints")
+
+    # Create hook for our custom function
+    addr_to_hook = 0x08048673
+    proj.hook(addr=addr_to_hook, hook=custom_check_equal, length=5)
+
+    # Should create entry_state because it loads everything from scratch
+    # If we use blank_state, we have to pre-defined most of the stack, heap, ...
+    # and the program is prone to crash if we don't handle that precisely :D
+    init_state = proj.factory.entry_state()
+
+    # Prepare simulation to the success path
+    simulation = proj.factory.simgr(init_state)
+    simulation.explore(find=success_message, avoid=failure_message)
+
+    # NOT FOUND
+    if not simulation.found:
+        print("NOT FOUND")
+        hook(locals())
+
+    for solution_state in simulation.found:
+        print(solution_state.posix.stdin.concretize())
+
+if __name__=="__main__":
+    main()
+```
+</Collapse>
+
+## 09_angr_hooks
+
+### Analyze the Binary
+
+In `main`, the program asks us to enter a **16-byte string password** into `buffer`. Also, there is a hard-coded string stored `XYMKBKUHNIQYNQXE` named `password`.
+
+![09-main-1](/image/angr-note/09-main-1.png)
+
+![09-main-2](/image/angr-note/09-main-2.png)
+
+After that, each character in range `[A-Z]` of string `buffer` is encoded by `complex_function`.
+
+![09-main-3](/image/angr-note/09-main-3.png)
+
+![09-main-4](/image/angr-note/09-main-4.png)
+
+The encoded `buffer` is then passed to the `check_equals_XYMKBKUHNIQYNQXE` function to see if it matches the hardcoded password `XYMKBKUHNIQYNQXE`. The return value is stored into `equals` variable.
+
+![09-main-5](/image/angr-note/09-main-5.png)
+
+Furthermore, the hard-coded password `XYMKBKUHNIQYNQXE` is also encoded by the `complex_function`.
+
+![09-main-6](/image/angr-note/09-main-6.png)
+
+Finally, we are asked to enter a new value into `buffer` and it is being compared with the encoded `password` string. If both of them aren't equal, we get **failure message**. 
+
+Moreover, if the previous call to `check_equals_XYMKBKUHNIQYNQXE` between `XYMKBKUHNIQYNQXE` and previous `buffer` returns value different to zero, we also get **failure message**.
+
+![09-main-7](/image/angr-note/09-main-7.png)
+
+So, our end goal is to reach **success message**. The program is straightforward, so we don't need to create any **symbolic variables**, but we might face **state explosion** right at `check_equals_XYMKBKUHNIQYNQXE`. Because this function is checking character by character in a loop, this might make **angr** slow asf. To prevent it, we create a hook (custom function) where our **input** `buffer` must be equal to `XYMKBKUHNIQYNQXE` after being encoded.
+
+### Build the script 
+
+Like many other challenges, we import necessary libraries, use **LOGGING INFO** and IPython debugging view.
+
+```python
+import angr 
+import logging 
+import claripy
+import sys
+
+logging.getLogger("angr").setLevel(logging.INFO)
+
+def hook(l=None):
+    if l:
+        locals().update(l)
+    import IPython
+    IPython.embed(banner1='', exit_msg='', confirm_exit=False)
+    exit(0)
+```
+
+Next, we create **angr project** and **custom function (hook)**.
+
+```python
+proj = angr.Project("../problems/09_angr_hooks")
+
+# Hook
+def custom_check_equal(state):
+    buffer_addr = 0x0804A054
+    buffer_val = state.memory.load(buffer_addr, 0x10)
+
+    password = "XYMKBKUHNIQYNQXE"
+
+    state.regs.eax = claripy.If(
+        buffer_val == password,
+        claripy.BVV(1, 32), # true
+        claripy.BVV(0, 32)  # false
+    )
+
+addr_to_hook = 0x080486B3
+proj.hook(addr=addr_to_hook, hook=custom_check_equal, length=5)
+```
+
+Finally, we create **Simulation Manager** to find the **success message**.
+
+```python
+init_state = proj.factory.entry_state()
+simulation = proj.factory.simgr(init_state)
+simulation.explore(find=success_message, avoid=failure_message)
+
+hook(locals()) # Open IPython debugging view
+```
+
+Testing with **IPython** debugging view, we have the solution. 
+
+![09-solution-1](/image/angr-note/09-solution-1.png)
+
+![09-solution-2](/image/angr-note/09-solution-2.png)
+
+### Solution
+
+<Collapse title="09_angr_hooks Final Script">
+```python 
+import angr 
+import logging 
+import claripy
+import sys
+
+logging.getLogger("angr").setLevel(logging.INFO)
+
+def hook(l=None):
+    if l:
+        locals().update(l)
+    import IPython
+    IPython.embed(banner1='', exit_msg='', confirm_exit=False)
+    exit(0)
+
+def custom_check_function(state):
+    # Load the value from user input, (in program, it is stored inside the variable "buffer")
+    buffer_addr = 0x0804A054
+    buffer_size_in_bytes = 0x10
+    load_buffer = state.memory.load(buffer_addr, buffer_size_in_bytes)
+
+    # Hard-coded password
+    hard_coded_password = "XYMKBKUHNIQYNQXE"
+
+    # Return value of our custom_check_function
+    state.regs.eax = claripy.If(
+        load_buffer == hard_coded_password,
+        claripy.BVV(1, 32), # true
+        claripy.BVV(0, 32)  # false
+    )
+
+def success_message(state):
+    return b"Good Job." in state.posix.dumps(sys.stdout.fileno())
+
+def failure_message(state):
+    return b"Try again." in state.posix.dumps(sys.stdout.fileno())
+
+def main():
+    proj = angr.Project("../problems/09_angr_hooks")
+
+
+    # ---------------------------------- IDEA -----------------------------------
+    # In this program, it asks us to enter two password for double check verification
+    
+    # The first comparision checks between user_data and hard-coded password
+    # The second comparision checks between obfuscated hard-coded password and new user_data
+
+    # To make the program more efficient, we should hook the function check the password, 
+    # which is check_equals_XYMKBKUHNIQYNQXE()
+    # This can be done by a hook, which creates our own custom function :D
+
+    # Reason: check_equals_XYMKBKUHNIQYNQXE() uses for loop for checking character by character, 
+    # which creates exponential branches 
+    # => slow, inefficient
+
+
+
+    # ----------------------------------- SOLUTION ---------------------------------
+
+    # First of all, let's create a hook to our current binary
+
+    # We can do hook like this:
+    # proj.hook(
+    #     addr=0x080486B3, 
+    #     hook=custom_check_function, 
+    #     length=5
+    # ) 
+
+
+    # OR 
+    
+    addr_to_hook = 0x080486A9 # address at the sub instruction
+    length_to_skip_in_bytes = 18 # skip from 0x080486A9 to 0x080486BB
+
+    # Right at 0x080486BB, we want to return a value from our hook
+    proj.hook(
+        addr=addr_to_hook, 
+        hook=custom_check_function, 
+        length=length_to_skip_in_bytes
+    ) 
+
+    # Should create entry_state because it loads everything from scratch
+    # If we use blank_state, we have to pre-defined most of the stack, heap, ...
+    # and the program is prone to crash if we don't handle that precisely :D
+    init_state = proj.factory.entry_state()
+
+    # Prepare simulation to the success path
+    simulation = proj.factory.simgr(init_state)
+    simulation.explore(find=success_message, avoid=failure_message)
+
+    # NOT FOUND
+    if not simulation.found:
+        print("NOT FOUND")
+        hook(locals())
+
+    # FOUND => concretize to get the password
+    for solution_state in simulation.found:
+        print(solution_state.posix.stdin.concretize())
+
+if __name__=="__main__":
+    main()
+```
+</Collapse>
+
+## 10_angr_simprocedures
+
+### Analyze the Binary
+
+Just like other previous challenges, in `main` we have a **hard-coded password** with data `ORSDDWXHZURJRBDH`, and we are asked to enter a **16-byte string** into `ebp+s`.
+
+![10-main-1](/image/angr-note/10-main-1.png)
+
+Next, `ebp+s` undergoes a loop, where each character is encoded by `complex_function` if they are in range `[A-Z]`.
+
+![10-main-2](/image/angr-note/10-main-2.png)
+
+![10-main-3](/image/angr-note/10-main-3.png)
+
+Finally, the encoded input is passed into `check_equals_ORSDDWXHZURJRBDH` to check if we can get the **success message** or not.
+
+![10-main-4](/image/angr-note/10-main-4.png)
+
+![10-main-5](/image/angr-note/10-main-5.png)
+
+At this moment, we know that we can hook `check_equals_ORSDDWXHZURJRBDH` and read input from `stdin` to get flag. However, in this challenge, we play around with a new technique, which is called **SimProcedure**. Like the name suggests, this creates a **symbolic function** for an **actual function** in our program. This is initially **used for hooking functions from libraries** like `strcmp`, `malloc`, ..., but we can use this to **any functions**, even one in our target program. By using a **SimProcedure**, we *8replace the actual function with a symbolic version that we control**. When angr sees that function call, it will **run our version instead**.
+
+**You can read further information from the links below:**
+1. <a href="https://docs.angr.io/en/latest/extending-angr/simprocedures.html#quick-start" target="_blank">https://docs.angr.io/en/latest/extending-angr/simprocedures.html#quick-start</a>
+2. <a href="https://docs.angr.io/en/latest/api.html#angr.SimProcedure" target="_blank">https://docs.angr.io/en/latest/api.html#angr.SimProcedure</a>
+
+### Build the script
+
+Initially, we import necessary libraries, use **LOGGING INFO** and **IPython** debugging view.
+
+```python
+import angr
+import logging 
+import claripy
+import sys
+
+logging.getLogger("angr").setLevel(logging.INFO)
+
+def hook(l=None):
+    if l:
+        locals().update(l)
+    import IPython
+    IPython.embed(banner1='', exit_msg='', confirm_exit=False)
+    exit(0)
+```
+
+Next, we create **angr project** and **SimProcedure** to replace `check_equals_ORSDDWXHZURJRBDH` in our binary.
+
+```python
+proj = angr.Project("../problems/10_angr_simprocedures")
+
+# SimProcedure
+class ReplaceCheckEqual(angr.SimProcedure):
+        def run(self, input_addr, len):
+            input = self.state.memory.load(input_addr, len)
+
+            password = "ORSDDWXHZURJRBDH"
+
+            return claripy.If(
+                input == password,
+                claripy.BVV(1, 32),     # true
+                claripy.BVV(0, 32)      # false
+            )
+
+check_equal_symbol = "check_equals_ORSDDWXHZURJRBDH"
+proj.hook_symbol(check_equal_symbol, ReplaceCheckEqual())
+```
+
+Finally, we start our **Simulation Manager** to find the **success message** in the binary.
+
+```python
+def success_message(state):
+    return b"Good Job." in state.posix.dumps(sys.stdout.fileno())
+
+def failure_message(state):
+    return b"Try again." in state.posix.dumps(sys.stdout.fileno())
+
+# Create init_state and prepare simulation
+init_state = proj.factory.entry_state()
+simulation = proj.factory.simgr(init_state)
+
+simulation.explore(find=success_message, avoid=failure_message)
+
+hook(locals()) # Open IPython
+```
+
+Run with **IPython**, we get the solution.
+
+![10-solution-1](/image/angr-note/10-solution-1.png)
+
+![10-solution-2](/image/angr-note/10-solution-2.png)
+
+### Solution
+
+<Collapse title="10_angr_simprocedures Final Script">
+```python 
+import angr 
+import logging 
+import claripy
+import sys
+
+logging.getLogger("angr").setLevel(logging.INFO)
+
+def hook(l=None):
+    if l:
+        locals().update(l)
+    import IPython
+    IPython.embed(banner1='', exit_msg='', confirm_exit=False)
+    exit(0)
+
+def success_message(state):
+    return b"Good Job." in state.posix.dumps(sys.stdout.fileno())
+
+def failure_message(state):
+    return b"Try again." in state.posix.dumps(sys.stdout.fileno())
+
+def main():
+    proj = angr.Project("../problems/10_angr_simprocedures")
+
+    # -------------------------------- IDEA ----------------------------------
+    # We create a SimProcedure to hook the function check_equals_ORSDDWXHZURJRBDH()
+
+    # For further reading, please checking those docs out :D
+    # 1. https://docs.angr.io/en/latest/extending-angr/simprocedures.html#quick-start
+    # 2. https://docs.angr.io/en/latest/api.html#angr.SimProcedure
+
+
+
+    # --------------------------------- SOLUTION -----------------------------
+
+
+    # Create init_state
+    init_state = proj.factory.entry_state()
+
+
+    # Create SimProcedure
+    class Sim_Procedure_Replace_Check(angr.SimProcedure):
+        # Arguments "user_data_addr" and "length" come from 
+        # the function that we hook, in this case is check_equals_ORSDDWXHZURJRBDH()
+        def run(self, user_data_addr, length):
+
+            # Load user_data from memory
+            load_user_data = self.state.memory.load(user_data_addr, length)
+
+            # Hard-coded password
+            hard_coded_password = "ORSDDWXHZURJRBDH"
+
+            # Return value 
+            return claripy.If(
+                load_user_data == hard_coded_password,
+                claripy.BVV(1, 32), # true
+                claripy.BVV(0, 32)  # false
+            )
+        
+
+    check_equals_symbol = "check_equals_ORSDDWXHZURJRBDH"
+    proj.hook_symbol(check_equals_symbol, Sim_Procedure_Replace_Check())
+
+    # Prepare simulation and explore the success path
+    simulation = proj.factory.simgr(init_state)
+    simulation.explore(find=success_message, avoid=failure_message)
+
+    # NOT FOUND 
+    if not simulation.found:
+        print("NOT FOUND")
+        hook(locals())
+
+    # FOUND => concretize to get the password
+    for solution_state in simulation.found:
+        print("Flag: ", solution_state.posix.stdin.concretize())
+
+if __name__=="__main__":
+    main()
+```
+</Collapse>
+
+## 11_angr_sim_scanf
+
+### Analyze the Binary
+
+In `main`, we have a char array named `s` with a size of `20 bytes`. Then a call to `memset` to clear everything at the address of `s`, and copy the string `SUQMKQFX` into that array `s`.
+
+![11-main-1](/image/angr-note/11-main-1.png)
+
+Then array `s` goes through a **for loop**, where each character in range `[A-Z]` is encoded.
+
+![11-main-2](/image/angr-note/11-main-2.png)
+
+![11-main-3](/image/angr-note/11-main-3.png)
+
+Next, we are asked to enter **two unsigned integer** into `buffer0` and `buffer1` in the `.bss` section.
+
+![11-main-4](/image/angr-note/11-main-4.png)
+
+![11-main-5](/image/angr-note/11-main-5.png)
+
+![11-main-6](/image/angr-note/11-main-6.png)
+
+There is also a check to see if `scanf` is not successful, it prints **"Try again."**
+
+![11-main-7](/image/angr-note/11-main-7.png)
+
+![11-main-8](/image/angr-note/11-main-8.png)
+
+![11-main-9](/image/angr-note/11-main-9.png)
+
+Finally, it compares `buffer0` with `encoded s` and `buffer1` with `encoded s[4]`. If both the comparisions are equal, it prints success message **"Good Job."**
+
+![11-main-10](/image/angr-note/11-main-10.png)
+
+![11-main-11](/image/angr-note/11-main-11.png)
+
+In general, our endgoal is to get **"Good Job."** string. This happens only if two comparisons are true, `buffer0` must match `s`, and `buffer1` must match `s[4]`. 
+
+The string `s` is hardcoded in the program and then encoded by a function called `complex_function`, so we can't change it. But we can control `buffer0` and `buffer1`, which are inputs.
+
+To solve this with **angr**, we'll make `buffer0` and `buffer1` **symbolic inputs**, which means **angr** will figure out what values they need to be. We can do this by using `SimScanf`, which lets us simulate input from the user.
+
+### Build the script
+
+Let's import necessary libraries, use **LOGGING INFO** and **IPython** debugging view.
+
+```python
+import angr 
+import logging 
+import claripy
+import sys
+
+logging.getLogger("angr").setLevel(logging.INFO)
+
+def hook(l=None):
+    if l:
+        locals().update(l)
+    import IPython
+    IPython.embed(banner1='', exit_msg='', confirm_exit=False)
+    exit(0)
+```
+
+Next, we create **angr project** and `SimScanf`.
+
+```python
+proj = angr.Project("../problems/11_angr_sim_scanf")
+
+# SimProcedure to replace scanf
+class ReplaceScanf(angr.SimProcedure):
+    def run(self, format_string, addr1, addr2):
+        # Create 2 symbolic variables for our input
+        size_in_bytes = 0x4
+        password1 = claripy.BVS("password1", size_in_bytes*8)
+        password2 = claripy.BVS("password2", size_in_bytes*8)
+
+        # Write the 2 symbolic variables into memory
+        # Since we are writing number into address => remember endianness
+        self.state.memory.store(addr1, password1, endness=proj.arch.memory_endness)
+        self.state.memory.store(addr2, password2, endness=proj.arch.memory_endness)
+
+        # Store 2 symbolic variables into global "dict" 
+        # so that we can reference it outside the SimProcedure
+        self.state.globals["solutions"] = (password1, password2)
+
+scanf_symbol = "__isoc99_scanf"
+proj.hook_symbol(symbol_name=scanf_symbol, simproc=ReplaceScanf())
+```
+
+Finally, we create **Simulation Manager** to find **"Good Job."** string.
+
+```python
+# Create entry state
+init_state = proj.factory.entry_state()
+
+def success_message(state):
+    return b"Good Job." in state.posix.dumps(sys.stdout.fileno())
+
+def failure_message(state):
+    return b"Try again." in state.posix.dumps(sys.stdout.fileno())
+
+# Prepare simulation
+simulation = proj.factory.simgr(init_state)
+simulation.explore(find=success_message, avoid=failure_message)
+
+    # NOT FOUND
+    if not simulation.found:
+        print("NOT FOUND")
+        hook(locals())
+
+    for solution_state in simulation.found:
+        real_password = solution_state.globals["solutions"]
+        print("Flag", solution_state.solver.eval(real_password[0]), solution_state.solver.eval(real_password[1]))
+```
+
+Run the script and we got the passwords.
+
+![11-solution-1](/image/angr-note/11-solution-1.png)
+
+### Solution
+
+<Collapse title="11_angr_sim_scanf Final Script">
+```python 
+import angr 
+import logging 
+import claripy
+import sys
+
+logging.getLogger("angr").setLevel(logging.INFO)
+
+def hook(l=None):
+    if l:
+        locals().update(l)
+    import IPython
+    IPython.embed(banner1='', exit_msg='', confirm_exit=False)
+    exit(0)
+
+def success_message(state):
+    return b"Good Job." in state.posix.dumps(sys.stdout.fileno())
+
+def failure_message(state):
+    return b"Try again." in state.posix.dumps(sys.stdout.fileno())
+
+def main():
+    proj = angr.Project("../problems/11_angr_sim_scanf")
+
+    # SimProcedure to replace scanf
+    class ReplaceScanf(angr.SimProcedure):
+        def run(self, format_string, addr1, addr2):
+            # Create 2 symbolic variables for our input
+            size_in_bytes = 0x4
+            password1 = claripy.BVS("password1", size_in_bytes*8)
+            password2 = claripy.BVS("password2", size_in_bytes*8)
+
+            # Write the 2 symbolic variables into memory
+            # Since we are writing number into address => remember endianness
+            self.state.memory.store(addr1, password1, endness=proj.arch.memory_endness)
+            self.state.memory.store(addr2, password2, endness=proj.arch.memory_endness)
+
+            # Store 2 symbolic variables into global "dict" 
+            # so that we can reference it outside the SimProcedure
+            self.state.globals["solutions"] = (password1, password2)
+
+    scanf_symbol = "__isoc99_scanf"
+    proj.hook_symbol(symbol_name=scanf_symbol, simproc=ReplaceScanf())
+
+    # Create entry state
+    init_state = proj.factory.entry_state()
+
+    # Prepare simulation
+    simulation = proj.factory.simgr(init_state)
+    simulation.explore(find=success_message, avoid=failure_message)
+
+    # NOT FOUND
+    if not simulation.found:
+        print("NOT FOUND")
+        hook(locals())
+
+    for solution_state in simulation.found:
+        real_password = solution_state.globals["solutions"]
+        print("Flag", solution_state.solver.eval(real_password[0]), solution_state.solver.eval(real_password[1]))
+
+if __name__=="__main__":
+    main()
+```
+</Collapse>
+
+## 12_angr_veritesting
+
+### Overview
+
+This challenge is short and straightforward, so I'll give a quick explanation of why I chose a certain approach.
+
+In the `main` pseudo-code, we are asked to enter **a 32-byte string**, which gets stored at `v19 + 3`. After that, the program enters **a for loop that runs 32 times**.
+
+![12-main-1](/image/angr-note/12-main-1.png)
+
+This kind of loop causes a **state explosion** in **angr**, meaning **angr** creates a huge number of possible paths to explore, which slows everything down.
+
+To deal with this, we can use a technique in **angr** called `veritesting`. Veritesting works on the **Program Counter (PC)**. It merges different paths that end up at the same PC, effectively reducing the number of states **angr** has to explore. This saves time and makes the analysis much faster.
+
+### Solution
+
+<Collapse title="12_angr_veritesting Final Script">
+```python 
+import angr 
+import logging 
+import sys
+
+logging.getLogger("angr").setLevel(logging.INFO)
+
+def hook(l=None):
+    if l:
+        locals().update(l)
+    import IPython
+    IPython.embed(banner1='', exit_msg='', confirm_exit=False)
+    exit(0)
+
+def success_message(state):
+    return b"Good Job." in state.posix.dumps(sys.stdout.fileno())
+
+def failure_message(state):
+    return b"Try again." in state.posix.dumps(sys.stdout.fileno())
+
+def main():
+    proj = angr.Project("../problems/12_angr_veritesting")
+
+    # Create init_state
+
+    # LAZY_SOLVES => Explore more new states, prevent spending in one state for too long
+    init_state = proj.factory.entry_state(add_options={
+        angr.options.LAZY_SOLVES
+    })
+
+    # Prepare simulation
+
+    # Need veritesting => because of this:
+    # for ( i = 0; i <= 31; ++i )
+    # {
+    #     v3 = *((char *)v19 + i + 3);
+    #     if ( v3 == complex_function(75, i + 93) )
+    #     ++v15;
+    # }
+    # 
+    # Would take exponentially states for each True and False branch!
+
+    simulation = proj.factory.simgr(init_state, veritesting=True)
+    simulation.explore(find=success_message, avoid=failure_message)
+
+    # NOT FOUND 
+    if not simulation.found:
+        print("NOT FOUND")
+        hook(locals())
+
+    # FOUND => concretize stdin 
+    for solution_state in simulation.found:
+        print(solution_state.posix.stdin.concretize())
+
+if __name__=="__main__":
+    main()
+```
+</Collapse>
+
+## 13_angr_static_binary
+
+### Overview
+
+We can clearly see that this binary is **statically linked**. This means all the necessary libraries have been compiled directly into the binary itself, it does **not rely on any dynamic libraries at runtime**.
+
+![13-main-1](/image/angr-note/13-main-1.png)
+
+But why we need to care about this?
+
+In **angr**, there's a feature called `SimProcedure`. It replaces common functions from **dynamic libraries** (like `printf`, `scanf`, `malloc`, etc.) with **angr predefined versions** to speed up analysis.
+
+However, in a **statically linked binary**, those functions are no longer external, they're compiled into the binary as raw assembly. That means **angr can't replace them with SimProcedures** and has to **run the actual instructions instead**.
+
+So when working with **statically linked binaries**, we have longer analysis time and possibly more manual effort when dealing with functions that would normally be handled by **SimProcedures**.
+
+### Analyze the Binary 
+
+In `main`, first of all, we clear everything up for variable `ebp+s2`, then load the string `PYIEFPIC` into `ebp+s2`.
+
+![13-main-2](/image/angr-note/13-main-2.png)
+
+After that, we are asked to enter **an 8-byte string** into `ebp+s1`, and each character from `ebp+s1` is being encoded by `complex_function` if they are in range `[A-Z]`.
+
+![13-main-3](/image/angr-note/13-main-3.png)
+
+![13-main-4](/image/angr-note/13-main-4.png)
+
+Finally, we have a comparision between `ebp+s1` and `ebp+s2`. If both are equal, we get the success message **"Good Job."**
+
+![13-main-5](/image/angr-note/13-main-5.png)
+
+Our goal is to reach the message **"Good Job."** Since this binary is **statically linked**, functions like `printf`, `scanf`, and `puts` are compiled directly into it, so **angr** can't use **SimProcedures** by default.
+
+Also, the program starts from `_start`, which calls `_libc_start_main` before reaching `main`. This adds unnecessary pressure in symbolic execution.
+
+To speed up analysis, we should hook these four functions: `_libc_start_main`, `printf`, `scanf`, and `puts`. This lets **angr** skip their internal logic and focus on the real challenge logic.
+
+### Build the script 
+
+First of all, let's import necessary libraries, use **LOGGING INFO** and **IPython** debugging view.
+
+```python
+import angr 
+import logging 
+import sys
+
+logging.getLogger("angr").setLevel(logging.INFO)
+
+def hook(l=None):
+    if l:
+        locals().update(l)
+    import IPython
+    IPython.embed(banner1='', exit_msg='', confirm_exit=False)
+    exit(0)
+```
+
+Next, we create **angr project** and **start hooking functions**.
+
+```python
+proj = angr.Project("../problems/13_angr_static_binary")
+
+printf_addr = 0x0804ED40
+scanf_addr = 0x0804ED80
+puts_addr = 0x0804F350
+__libc_start_main_addr = 0x08048D10
+
+proj.hook(printf_addr, angr.SIM_PROCEDURES['libc']['printf']())
+proj.hook(scanf_addr, angr.SIM_PROCEDURES['libc']['scanf']())
+proj.hook(puts_addr, angr.SIM_PROCEDURES['libc']['puts']())
+proj.hook(__libc_start_main_addr, angr.SIM_PROCEDURES["glibc"]["__libc_start_main"]())
+```
+
+Finally, we prepare **Simulation Manager** to find the success message **"Good Job."**
+
+```python 
+init_state = proj.factory.entry_state()
+simulation = proj.factory.simgr(init_state)
+
+def success_message(state):
+    return b"Good Job." in state.posix.dumps(sys.stdout.fileno())
+
+def failure_message(state):
+    return b"Try again." in state.posix.dumps(sys.stdout.fileno())
+
+simulation.explore(find=success_message, avoid=failure_message)
+
+if not simulation.found:
+    print("NOT FOUND")
+    hook(locals())
+
+for solution_state in simulation.found:
+    print(solution_state.posix.stdin.concretize())
+
+hook(locals()) # Open IPython
+```
+
+Run the script and we get the flag!
+
+![13-solution-1](/image/angr-note/13-solution-1.png)
+
+### Solution 
+
+<Collapse title="13_angr_static_binary Final Script">
+```python 
+import angr 
+import logging 
+import sys
+
+logging.getLogger("angr").setLevel(logging.INFO)
+
+def hook(l=None):
+    if l:
+        locals().update(l)
+    import IPython
+    IPython.embed(banner1='', exit_msg='', confirm_exit=False)
+    exit(0)
+
+def success_message(state):
+    return b"Good Job." in state.posix.dumps(sys.stdout.fileno())
+
+def failure_message(state):
+    return b"Try again." in state.posix.dumps(sys.stdout.fileno())
+
+def main():
+    proj = angr.Project("../problems/13_angr_static_binary")
+
+    # "libc" functions address linked in the STATIC BINARY
+    # (strncmp is in PLT section) => No need to find the address
+    printf_addr = 0x0804ED40
+    scanf_addr = 0x0804ED80
+    puts_addr = 0x0804F350
+
+    # "glibc" function address linked in the STATIC BINARY
+    __libc_start_main_addr = 0x08048D10
+
+    # HOOK "libc" and "glibc" functions to SimProcedures in ANGR
+    # 
+    # Remember the "()" at the end of each SimProcedures
+    # - Without "()" it just points out where the function is in SimProcedure,
+    #   not creating an instance of that function from SimProcedure
+    # - With "()", creating an instace from SimProcedure and overwrite it into memory
+    proj.hook(printf_addr, angr.SIM_PROCEDURES["libc"]["printf"]())
+    proj.hook(scanf_addr, angr.SIM_PROCEDURES["libc"]["scanf"]())
+    proj.hook(puts_addr, angr.SIM_PROCEDURES["libc"]["puts"]())
+    proj.hook(__libc_start_main_addr, angr.SIM_PROCEDURES["glibc"]["__libc_start_main"]())
+
+    # Create init_state
+    init_state = proj.factory.entry_state()
+
+    # Prepare simulation
+    simulation = proj.factory.simgr(init_state)
+    simulation.explore(find=success_message, avoid=failure_message)
+
+    # NOT FOUND 
+    if not simulation.found:
+        print("NOT FOUND")
+        hook(locals())
+
+    # FOUND => concretize the input
+    for solution_state in simulation.found:
+        print("Flag: ", solution_state.posix.stdin.concretize())
+
+if __name__=="__main__":
+    main()
+```
+</Collapse>
+
+## 14_angr_shared_library
+
+### Analyze the Binary
+
+In this challenge, we are provided two binaries, `14_angr_shared_library` and `lib14_angr_shared_library.so`.
+
+The `main` function from the binary `14_angr_shared_library` is short and simple. It basically asks us to enter **an 8-byte string password** and passes it into `validate` function.
+
+![14-main-1](/image/angr-note/14-main-1.png)
+
+However, the `validate` function is an **external function** from `lib14_angr_shared_library`.
+
+![14-main-2](/image/angr-note/14-main-2.png)
+
+This is the pseudo-code of `validate` function.
+
+![14-main-3](/image/angr-note/14-main-3.png)
+
+It is loading the string `PVBLVTFT` into `s2`, then each character of our input is encoded by `complex_function` if they are in range `[A-Z]`.
+
+![14-main-4](/image/angr-note/14-main-4.png)
+
+The idea here is to **load the library `".so"` with a fake base address**.
+
+Then from the base address, we will find the address of function `validate()`, which can be interpreted as: 
+$$
+"base + offset"
+$$
+
+Rememeber that the arguments of `validate()`, it contains the input password. So we can basically **create a symbolic variable** and **let angr find that for us** :D
+
+### Build the script 
+
+As usual, let's import necessary libraries, use **LOGGING INFO** and **IPython** debugging view.
+
+```python 
+import angr 
+import logging
+import claripy
+
+logging.getLogger("angr").setLevel(logging.INFO)
+
+def hook(l=None):
+    if l:
+        locals().update(l)
+    import IPython
+    IPython.embed(banner1='', exit_msg='', confirm_exit=False)
+    exit(0)
+```
+
+Next, we load the `".so"` library with **a fake base address**.
+
+```python
+base = 0x40000000 # Fake base address :>
+proj = angr.Project(
+    "../problems/lib14_angr_shared_library.so",
+    load_options={
+        'main_opts' : {
+            'custom_base_addr' : base
+        }
+    }
+)
+```
+
+Based on this function format `_BOOL4 __cdecl validate(char *s1, int a2)`.
+
+We must create **a pointer pointing to a fake address (\*s1)** and **the length (a2)**.
+
+```python
+validate_addr = base + 0x6D7
+buffer_pointer = claripy.BVV(0x90000000, 32) # act as a pointer to the later symbolic password
+length = claripy.BVV(0x8, 32)
+```
+
+Now, our state will start from `validate` function because inside `validate`, `(*s1)` is actually our password. So just create a symbolic variable for **(\*s1)** and we are done :D
+
+This means that we can create a symbolic variable linked to the pointer `(buffer_pointer)`.
+
+```python 
+# This is like a function call => validate(char *s1, int a2)
+init_state = proj.factory.call_state(validate_addr, buffer_pointer, length)
+```
+
+Now, we will create symbolic password, where it is stored into the `buffer_pointer`.
+
+```python 
+size_in_bytes = 0x8
+password = claripy.BVS("password", size_in_bytes*8)
+
+# Write symbolic password into buffer_pointer
+init_state.memory.store(buffer_pointer, password)
+```
+
+After finishing the set up, we can start our simulation. But where should our simulation explore?
+
+&#x21d2; The smart thing is that we **explore to the end of `validate()`** and **put a constraint for only the True**.
+
+&#x21d2; **angr** will **discard those "password" that doesn't match the True** :>
+
+Then concretize the password (symbolic variable).
+
+```python
+simulation = proj.factory.simgr(init_state)
+
+check_point_addr = base + 0x783 # the end of validate()
+simulation.explore(find=check_point_addr)
+
+# NOT FOUND 
+if not simulation.found:
+    print("NOT FOUND")
+    hook(locals())
+
+# FOUND => Add constraint to get the "password" for the True
+for solution_state in simulation.found:
+    # Add constraint that the function return must be true
+    solution_state.add_constraints(solution_state.regs.eax != 0)
+
+    solution_password = solution_state.solver.eval(password, cast_to=bytes)
+    print("Flag: ", solution_password)
+```
+
+This is the result we get.
+
+![14-solution-1](/image/angr-note/14-solution-1.png)
+
+### Solution 
+
+<Collapse title="14_angr_shared_library Final Script">
+```python 
+import angr 
+import logging 
+import claripy
+
+logging.getLogger("angr").setLevel(logging.INFO)
+
+def hook(l=None):
+    if l:
+        locals().update(l)
+    import IPython
+    IPython.embed(banner1='', exit_msg='', confirm_exit=False)
+    exit(0)
+
+def main():
+
+
+    # ------------------------------ IDEA ----------------------------
+    # 
+    # The idea here is to load the library ".so" with a fake base address.
+    #
+    # Then from the base address, we will find the address of function 
+    # validate(), which can be interpreted as: "base + offset"
+    #
+    # Rememeber that the arguments off validate(), it contains the input password
+    # So we can basically create a symbolic variable and let ANGR find that for us :D
+
+
+    # ----------------------------- SOLUTION --------------------------
+
+
+    # Load the ".so" library
+    base = 0x40000000 # Fake base address :>
+    proj = angr.Project(
+        "../problems/lib14_angr_shared_library.so",
+        load_options={
+            'main_opts' : {
+                'custom_base_addr' : base
+            }
+        }
+    )
+
+    # Based on the function format:
+    # _BOOL4 __cdecl validate(char *s1, int a2)
+    # 
+    # We must create an fake address (*s1), the length (a2)
+    # and address of validate = base + offset
+     
+    validate_addr = base + 0x6D7
+    buffer_pointer = claripy.BVV(0x90000000, 32) # act as a pointer to the later symbolic password
+    length = claripy.BVV(0x8, 32)
+    
+
+    # Here is the key:
+    
+    # Our state will start from the call to function validate()
+    # because inside validate(), (*s1) is actually our password
+    # => just create the symbolic variable for (*s1) and we are done :D
+
+    # This means that we can create a symbolic variable linked to the pointer (buffer_pointer)
+
+    # This is like a function call => validate(char *s1, int a2)
+    init_state = proj.factory.call_state(validate_addr, buffer_pointer, length)
+
+
+    # Now, we will create symbolic password, where it is stored into the buffer_pointer
+    size_in_bytes = 0x8
+    password = claripy.BVS("password", size_in_bytes*8)
+
+    # Write symbolic password into buffer_pointer
+    init_state.memory.store(buffer_pointer, password)
+
+    # After finishing the set up, we can start our simulation
+    # But where should our simulation explore?
+    #
+    # => The smart thing is that we explore to the end of validate() 
+    # and put a constraint for only the True => ANGR will discard those "password" 
+    # that doesn't match the True :>
+    #
+    # Then concretize the password (symbolic variable) :P
+    simulation = proj.factory.simgr(init_state)
+
+    check_point_addr = base + 0x783 # the end of validate()
+    simulation.explore(find=check_point_addr)
+
+    # NOT FOUND 
+    if not simulation.found:
+        print("NOT FOUND")
+        hook(locals())
+
+    # FOUND => Add constraint to get the "password" for the True
+    for solution_state in simulation.found:
+        # Add constraint that the function return must be true
+        solution_state.add_constraints(solution_state.regs.eax != 0)
+
+        solution_password = solution_state.solver.eval(password, cast_to=bytes)
+        print("Flag: ", solution_password)
+
+if __name__=="__main__":
+    main()
+```
+</Collapse>
+
+## 15_angr_arbitrary_read (Update soon)
+
+## 16_angr_arbitrary_write (Update soon)
+
+## 17_angr_arbitrary_jump (Update soon)
