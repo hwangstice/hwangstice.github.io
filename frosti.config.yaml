@@ -80,6 +80,10 @@ user:
         ariaLabel: Discord
         title: Discord
         svg: "ri:discord-line"
+      - href: "https://open.spotify.com/user/31iyzwvyasiucdi62k5nc56mthqa"
+        ariaLabel: Spotify
+        title: Spotify
+        svg: "ri:spotify-line"
   footer:
     social:
       - href: "https://github.com/dathwang"
@@ -94,3 +98,7 @@ user:
         ariaLabel: Discord
         title: Discord
         svg: "ri:discord-line"
+      - href: "https://open.spotify.com/user/31iyzwvyasiucdi62k5nc56mthqa"
+        ariaLabel: Spotify
+        title: Spotify
+        svg: "ri:spotify-line"
