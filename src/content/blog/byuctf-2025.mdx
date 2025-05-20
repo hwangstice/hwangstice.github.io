@@ -799,11 +799,11 @@ Let's open that `.so` file in IDA and have a look at `check` function.
 
 ![android-2-check-in-ida](/image/byuctf-2025/android-2-check-in-ida.png)
 
-To get the **success message**, this `check` function must return `1`. This can only be achieved when **the length of string is 23** and **each char must be equal to `aBycnuAacglyTtM[i * i % 47]`**.
-
 Check the string `aBycnuAacglyTtM` in IDA, it is a **read only string** contains the following data.
 
 ![android-2-string](/image/byuctf-2025/android-2-string.png)
+
+To get the **success message**, this `check` function must return `1`. This can only be achieved when **the length of string is 23** and **each char must be equal to `aBycnuAacglyTtM[i * i % 47]`**.
 
 ### Solution 
 
