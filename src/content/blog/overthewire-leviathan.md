@@ -8,6 +8,7 @@ categories:
 tags:
   - Wargame
   - Reverse
+  - TOCTOU
 ---
 
 I'm super excited right now because I just learned new techniques, and I also got to play around with **radare2** for the first time. It feels amazing to really understand how a binary actually works and then come up with a way to exploit it. Nothing beats that feeling!

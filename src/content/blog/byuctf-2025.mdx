@@ -1,0 +1,825 @@
+---
+title: "BYUCTF 2025"
+description: "I should learn more about Android Reverse :)"
+pubDate: "May 19 2025"
+image: /image/blog-cover/byuctf-2025.jpg
+categories:
+  - tech
+tags:
+  - Reverse
+  - CTF
+  - Android Rev
+---
+
+import Collapse from "../../components/mdx/Collapse.astro";
+import Diff from "../../components/mdx/Diff.astro";
+import Error from "../../components/mdx/Error.astro";
+import Info from "../../components/mdx/Info.astro";
+import Kbd from "../../components/mdx/Kbd.astro";
+import Success from "../../components/mdx/Success.astro";
+import Warning from "../../components/mdx/Warning.astro";
+import TimeLine from "../../components/mdx/TimeLine.astro";
+import LinkCard from "../../components/mdx/LinkCard.astro";
+
+## Overview
+
+Last week I participated in **BYUCTF 2025**, and **this was my first ever CTF**. I managed to **solve 4/6 Rev chals**, it is truly a big achievement for myself ❄️.
+
+Two of them were **Android reverse challenges**, which gave me a really hard time. I struggled a lot, but after plenty of trial and error, I finally solved them. In this blog, I will show you how I solved them. 
+
+After this comp, I've realized that **Android reversing** is something I definitely need to work on. **Next time, I'm coming back to kill those Android revs, haha**.
+
+You can get the source of 4 challenges here.
+
+<LinkCard
+  title="BYUCTF 2025"
+  desc="Source!"
+  url="https://github.com/dathwang/CTFs-Source/tree/main/BYUCTF-2025"
+  img="/image/byuctf-2025/byuctf2025.png"
+/>
+
+## Baby Android 1
+
+### Description
+
+![baby-android-1-description](/image/byuctf-2025/baby-android-1-description.png)
+
+### Analysis
+
+![baby-android-1-file](/image/byuctf-2025/byuctf-2025-baby-android-1-file.png)
+
+At first glance, I see that we have an `.apk` file. So I try to run that file in **Android Studio**, but nothing useful here, except the string **"Too slow!!"**.
+
+![android-1-simulator](/image/byuctf-2025/android-1-simulator.png)
+
+When loading the `.apk` file in `jadx`, in **MainActivity** of **byuctf.downwiththefrench**, we can see that the string **"Too slow!!"** is assigned to **id.homeText** inside **"R"** class.
+
+```java
+package byuctf.downwiththefrench;
+
+import android.os.Bundle;
+import android.widget.TextView;
+import androidx.appcompat.app.AppCompatActivity;
+
+/* loaded from: classes3.dex */
+public class MainActivity extends AppCompatActivity {
+    @Override // androidx.fragment.app.FragmentActivity, androidx.activity.ComponentActivity, androidx.core.app.ComponentActivity, android.app.Activity
+    protected void onCreate(Bundle savedInstanceState) {
+        super.onCreate(savedInstanceState);
+        setContentView(R.layout.activity_main);
+        Utilities util = new Utilities(this);
+        util.cleanUp();
+        TextView homeText = (TextView) findViewById(R.id.homeText);
+        homeText.setText("Too slow!!");
+    }
+}
+```
+
+Looking at the **"R"** class, there is a bunch of **flagPart[1-28]** at different addresses.
+
+![android-1-R-class](/image/byuctf-2025/android-1-R-class.png)
+
+When I press **x** on the keyboard at **flagPart1** to see where it is being used. The screen popped up showing that those **flagPart[1-28]** are used inside function `cleanUp()`.
+
+![android-1-press-x](/image/byuctf-2025/android-1-press-x.png)
+
+In `cleanUp()` function, it is replacing all characters of the real flag with an empty string, except **"homeText"**! 
+
+```java
+public void cleanUp() {
+        TextView flag = (TextView) this.activity.findViewById(R.id.flagPart1);
+        flag.setText("");
+        TextView flag2 = (TextView) this.activity.findViewById(R.id.flagPart2);
+        flag2.setText("");
+        TextView flag3 = (TextView) this.activity.findViewById(R.id.flagPart3);
+        flag3.setText("");
+        TextView flag4 = (TextView) this.activity.findViewById(R.id.flagPart4);
+        flag4.setText("");
+        TextView flag5 = (TextView) this.activity.findViewById(R.id.flagPart5);
+        flag5.setText("");
+        TextView flag6 = (TextView) this.activity.findViewById(R.id.flagPart6);
+        flag6.setText("");
+        TextView flag7 = (TextView) this.activity.findViewById(R.id.flagPart7);
+        flag7.setText("");
+        TextView flag8 = (TextView) this.activity.findViewById(R.id.flagPart8);
+        flag8.setText("");
+        TextView flag9 = (TextView) this.activity.findViewById(R.id.flagPart9);
+        flag9.setText("");
+        TextView flag10 = (TextView) this.activity.findViewById(R.id.flagPart10);
+        flag10.setText("");
+        TextView flag11 = (TextView) this.activity.findViewById(R.id.flagPart11);
+        flag11.setText("");
+        TextView flag12 = (TextView) this.activity.findViewById(R.id.flagPart12);
+        flag12.setText("");
+        TextView flag13 = (TextView) this.activity.findViewById(R.id.flagPart13);
+        flag13.setText("");
+        TextView flag14 = (TextView) this.activity.findViewById(R.id.flagPart14);
+        flag14.setText("");
+        TextView flag15 = (TextView) this.activity.findViewById(R.id.flagPart15);
+        flag15.setText("");
+        TextView flag16 = (TextView) this.activity.findViewById(R.id.flagPart16);
+        flag16.setText("");
+        TextView flag17 = (TextView) this.activity.findViewById(R.id.flagPart17);
+        flag17.setText("");
+        TextView flag18 = (TextView) this.activity.findViewById(R.id.flagPart18);
+        flag18.setText("");
+        TextView flag19 = (TextView) this.activity.findViewById(R.id.flagPart19);
+        flag19.setText("");
+        TextView flag20 = (TextView) this.activity.findViewById(R.id.flagPart20);
+        flag20.setText("");
+        TextView flag21 = (TextView) this.activity.findViewById(R.id.flagPart21);
+        flag21.setText("");
+        TextView flag22 = (TextView) this.activity.findViewById(R.id.flagPart22);
+        flag22.setText("");
+        TextView flag23 = (TextView) this.activity.findViewById(R.id.flagPart23);
+        flag23.setText("");
+        TextView flag24 = (TextView) this.activity.findViewById(R.id.flagPart24);
+        flag24.setText("");
+        TextView flag25 = (TextView) this.activity.findViewById(R.id.flagPart25);
+        flag25.setText("");
+        TextView flag26 = (TextView) this.activity.findViewById(R.id.flagPart26);
+        flag26.setText("");
+        TextView flag27 = (TextView) this.activity.findViewById(R.id.flagPart27);
+        flag27.setText("");
+        TextView flag28 = (TextView) this.activity.findViewById(R.id.flagPart28);
+        flag28.setText("");
+    }
+```
+
+So, the flow of the program is as follow:
+
+1. Create content in `activity_main`.
+
+2. `cleanUp()` function sets all **flagPart** to **empty string**.
+
+3. Find the **id.homeText** from **"R"** class and assign it with the string **"Too slow!!"**.
+
+This is the reason why in runtime, we only see the text **"Too slow!!"**. In **Android Studio**, it takes the file `activity_main.xml` to render the activities, BUT because the program already sets all **flagPart** to **empty string**, the only visible string is **homeText**!
+
+### My solution
+
+Our goal is to get the `activity_main.xml`, so I use the tool named `apktool` to extract the `.apk` file.
+
+![android-1-apktool](/image/byuctf-2025/android-1-apktool.png)
+
+This is what I got.
+
+![android-1-after-apktool](/image/byuctf-2025/android-1-after-apktool.png)
+
+I follow this path `baby-android-1\res\layout` and get the `activity_main.xml` file. Open that file up in web browser, I see the texts, which is a good signal :D 
+
+However, **flagPart1** is holding char **"\}"**, and **flagPart28** is holding char **"\{"**, so I think **the flag is in reverse order**.
+
+![android-1-flagPart-1](/image/byuctf-2025/android-1-flagPart-1-.png)
+
+![android-1-flagPart-28](/image/byuctf-2025/android-1-flagPart-28.png)
+
+But this `{e4_if_e_efcopukd0inrdccyat}` is a wrong one :(
+
+Inspecting the **XML** file carefully, I find there are information about **constraints to Top, Bottom, Start, End** and **marginEnd, marginBottom**. I googled around and found those two useful Youtube videos.
+
+- <a href="https://www.youtube.com/watch?v=VsgXFdynDuQ&ab_channel=PhilippLackner" target="_blank">CONSTRAINT LAYOUT BASICS - Android Fundamentals</a>
+
+- <a href="https://www.youtube.com/watch?v=zlScaz1ePWA&ab_channel=IJApps" target="_blank">Padding and Margin in XML Explained</a>
+
+
+When looking at this code:
+
+```html
+<TextView 
+  android:id="@id/homeText" 
+  android:layout_width="wrap_content" 
+  android:layout_height="wrap_content" 
+  android:text="b" 
+  app:layout_constraintBottom_toBottomOf="parent" 
+  app:layout_constraintEnd_toEndOf="parent" 
+  app:layout_constraintHorizontal_bias="0.066" 
+  app:layout_constraintStart_toStartOf="parent" 
+  app:layout_constraintTop_toTopOf="parent" 
+  app:layout_constraintVertical_bias="0.022"
+/>
+```
+
+The letter **"b"** was the first character shown on the screen, **appearing near the top-left corner**. Because `app:layout_constraintHorizontal_bias="0.066"` pushes it to the **left** and `app:layout_constraintVertical_bias="0.022"` pushes it to the **top**.
+
+For the **id/flagPart[1-28]**, they are using **marginBottom** and **marginEnd**.
+
+- If **marginBottom** is higher, that text is more likely close to the Top (move upward).
+
+- If **marginEnd** is higher, that text is more likely close to the Start (move to the left, presumably it is using RTL).
+
+Now, I asked <a href="https://aistudio.google.com/prompts/new_chat" target="_blank">Google AI Studio</a> to create for me a C++ code to construct a `vector<pair<string, pair<int, int>>>` from **flagPart[1-28]** in the `.xml` file! 
+
+In the `vector`, `string` is the text, and `pair<int, int>` is `pair<marginBottom, marginTop>`.
+
+<Collapse title="C++ code to get text, marginBottom, marginTop">
+```cpp
+#include <iostream>
+#include <vector>
+#include <string>
+#include <fstream>
+#include <sstream>
+#include <algorithm>
+#include <utility>   // For std::pair
+#include <stdexcept> // For std::stoi, std::stod
+
+// Helper structure to hold parsed data before sorting
+struct TextViewData
+{
+    int id_num; // Numeric part of the id (e.g., 1 from flagPart1)
+    std::string text;
+    int marginBottom;
+    int marginEnd;
+
+    // For sorting
+    bool operator<(const TextViewData &other) const
+    {
+        return id_num < other.id_num;
+    }
+};
+
+// Helper function to extract attribute value
+// Example: extractAttributeValue(line, "android:text=\"", "\"")
+std::string extractAttributeValue(const std::string &line, const std::string &attr_start_token, const std::string &attr_end_token)
+{
+    size_t start_pos = line.find(attr_start_token);
+    if (start_pos == std::string::npos)
+    {
+        return ""; // Attribute not found
+    }
+    start_pos += attr_start_token.length();
+    size_t end_pos = line.find(attr_end_token, start_pos);
+    if (end_pos == std::string::npos)
+    {
+        return ""; // End token not found
+    }
+    return line.substr(start_pos, end_pos - start_pos);
+}
+
+// Helper function to convert margin string (e.g., "420.0dip") to int
+int parseMarginValue(const std::string &margin_str_full)
+{
+    if (margin_str_full.empty())
+        return 0;
+    // Remove "dip"
+    std::string num_str = margin_str_full;
+    size_t dip_pos = num_str.rfind("dip");
+    if (dip_pos != std::string::npos)
+    {
+        num_str.erase(dip_pos);
+    }
+    try
+    {
+        // Convert to double first to handle ".0", then to int
+        return static_cast<int>(std::stod(num_str));
+    }
+    catch (const std::invalid_argument &ia)
+    {
+        std::cerr << "Invalid argument for margin conversion: " << margin_str_full << std::endl;
+    }
+    catch (const std::out_of_range &oor)
+    {
+        std::cerr << "Out of range for margin conversion: " << margin_str_full << std::endl;
+    }
+    return 0; // Default or error value
+}
+
+// Helper function to extract the numeric part from an ID like "flagPart12"
+int extractIdNum(const std::string &id_full_str)
+{
+    if (id_full_str.empty())
+        return -1; // Invalid ID
+    // Expecting format like "@id/flagPartX"
+    std::string id_val = id_full_str;
+    size_t prefix_pos = id_val.find("@id/");
+    if (prefix_pos != std::string::npos)
+    {
+        id_val = id_val.substr(prefix_pos + 4); // Length of "@id/"
+    }
+
+    // Now id_val should be something like "flagPart12"
+    // Find the start of the number
+    size_t num_start = 0;
+    while (num_start < id_val.length() && !isdigit(id_val[num_start]))
+    {
+        num_start++;
+    }
+    if (num_start == id_val.length())
+        return -1; // No number found
+
+    try
+    {
+        return std::stoi(id_val.substr(num_start));
+    }
+    catch (const std::invalid_argument &ia)
+    {
+        std::cerr << "Invalid argument for ID number conversion: " << id_val.substr(num_start) << std::endl;
+    }
+    catch (const std::out_of_range &oor)
+    {
+        std::cerr << "Out of range for ID number conversion: " << id_val.substr(num_start) << std::endl;
+    }
+    return -1; // Default or error value
+}
+
+int main()
+{
+    std::string filename = "input.xml"; // Or pass as argument
+
+    // For demonstration, using a stringstream with your provided data
+    std::string xml_content = R"(
+<TextView android:id="@id/flagPart1" android:layout_width="wrap_content" android:layout_height="wrap_content" android:layout_marginBottom="420.0dip" android:text="}" android:layout_marginEnd="216.0dip" app:layout_constraintBottom_toBottomOf="parent" app:layout_constraintEnd_toEndOf="parent"/>
+<TextView android:id="@id/flagPart2" android:layout_width="wrap_content" android:layout_height="wrap_content" android:layout_marginBottom="616.0dip" android:text="t" android:layout_marginEnd="340.0dip" app:layout_constraintBottom_toBottomOf="parent" app:layout_constraintEnd_toEndOf="parent"/>
+<TextView android:id="@id/flagPart3" android:layout_width="wrap_content" android:layout_height="wrap_content" android:layout_marginBottom="556.0dip" android:text="a" android:layout_marginEnd="332.0dip" app:layout_constraintBottom_toBottomOf="parent" app:layout_constraintEnd_toEndOf="parent"/>
+<TextView android:id="@id/flagPart4" android:layout_width="wrap_content" android:layout_height="wrap_content" android:layout_marginBottom="676.0dip" android:text="y" android:layout_marginEnd="368.0dip" app:layout_constraintBottom_toBottomOf="parent" app:layout_constraintEnd_toEndOf="parent"/>
+<TextView android:id="@id/flagPart5" android:layout_width="wrap_content" android:layout_height="wrap_content" android:layout_marginBottom="500.0dip" android:text="c" android:layout_marginEnd="252.0dip" app:layout_constraintBottom_toBottomOf="parent" app:layout_constraintEnd_toEndOf="parent"/>
+<TextView android:id="@id/flagPart6" android:layout_width="wrap_content" android:layout_height="wrap_content" android:layout_marginBottom="636.0dip" android:text="c" android:layout_marginEnd="348.0dip" app:layout_constraintBottom_toBottomOf="parent" app:layout_constraintEnd_toEndOf="parent"/>
+<TextView android:id="@id/flagPart7" android:layout_width="wrap_content" android:layout_height="wrap_content" android:layout_marginBottom="436.0dip" android:text="d" android:layout_marginEnd="364.0dip" app:layout_constraintBottom_toBottomOf="parent" app:layout_constraintEnd_toEndOf="parent"/>
+<TextView android:id="@id/flagPart8" android:layout_width="wrap_content" android:layout_height="wrap_content" android:layout_marginBottom="496.0dip" android:text="r" android:layout_marginEnd="348.0dip" app:layout_constraintBottom_toBottomOf="parent" app:layout_constraintEnd_toEndOf="parent"/>
+<TextView android:id="@id/flagPart9" android:layout_width="wrap_content" android:layout_height="wrap_content" android:layout_marginBottom="536.0dip" android:text="n" android:layout_marginEnd="336.0dip" app:layout_constraintBottom_toBottomOf="parent" app:layout_constraintEnd_toEndOf="parent"/>
+<TextView android:id="@id/flagPart10" android:layout_width="wrap_content" android:layout_height="wrap_content" android:layout_marginBottom="456.0dip" android:text="i" android:layout_marginEnd="360.0dip" app:layout_constraintBottom_toBottomOf="parent" app:layout_constraintEnd_toEndOf="parent"/>
+<TextView android:id="@id/flagPart11" android:layout_width="wrap_content" android:layout_height="wrap_content" android:layout_marginBottom="536.0dip" android:text="0" android:layout_marginEnd="276.0dip" app:layout_constraintBottom_toBottomOf="parent" app:layout_constraintEnd_toEndOf="parent"/>
+<TextView android:id="@id/flagPart12" android:layout_width="wrap_content" android:layout_height="wrap_content" android:layout_marginBottom="516.0dip" android:text="d" android:layout_marginEnd="340.0dip" app:layout_constraintBottom_toBottomOf="parent" app:layout_constraintEnd_toEndOf="parent"/>
+<TextView android:id="@id/flagPart13" android:layout_width="wrap_content" android:layout_height="wrap_content" android:layout_marginBottom="460.0dip" android:text="k" android:layout_marginEnd="232.0dip" app:layout_constraintBottom_toBottomOf="parent" app:layout_constraintEnd_toEndOf="parent"/>
+<TextView android:id="@id/flagPart14" android:layout_width="wrap_content" android:layout_height="wrap_content" android:layout_marginBottom="656.0dip" android:text="u" android:layout_marginEnd="356.0dip" app:layout_constraintBottom_toBottomOf="parent" app:layout_constraintEnd_toEndOf="parent"/>
+<TextView android:id="@id/flagPart15" android:layout_width="wrap_content" android:layout_height="wrap_content" android:layout_marginBottom="452.0dip" android:text="p" android:layout_marginEnd="320.0dip" app:layout_constraintBottom_toBottomOf="parent" app:layout_constraintEnd_toEndOf="parent"/>
+<TextView android:id="@id/flagPart16" android:layout_width="wrap_content" android:layout_height="wrap_content" android:layout_marginBottom="476.0dip" android:text="o" android:layout_marginEnd="352.0dip" app:layout_constraintBottom_toBottomOf="parent" app:layout_constraintEnd_toEndOf="parent"/>
+<TextView android:id="@id/flagPart17" android:layout_width="wrap_content" android:layout_height="wrap_content" android:layout_marginBottom="500.0dip" android:text="c" android:layout_marginEnd="300.0dip" app:layout_constraintBottom_toBottomOf="parent" app:layout_constraintEnd_toEndOf="parent"/>
+<TextView android:id="@id/flagPart18" android:layout_width="wrap_content" android:layout_height="wrap_content" android:layout_marginBottom="596.0dip" android:text="f" android:layout_marginEnd="332.0dip" app:layout_constraintBottom_toBottomOf="parent" app:layout_constraintEnd_toEndOf="parent"/>
+<TextView android:id="@id/flagPart19" android:layout_width="wrap_content" android:layout_height="wrap_content" android:layout_marginBottom="484.0dip" android:text="e" android:layout_marginEnd="308.0dip" app:layout_constraintBottom_toBottomOf="parent" app:layout_constraintEnd_toEndOf="parent"/>
+<TextView android:id="@id/flagPart20" android:layout_width="wrap_content" android:layout_height="wrap_content" android:layout_marginBottom="436.0dip" android:text="_" android:layout_marginEnd="328.0dip" app:layout_constraintBottom_toBottomOf="parent" app:layout_constraintEnd_toEndOf="parent"/>
+<TextView android:id="@id/flagPart21" android:layout_width="wrap_content" android:layout_height="wrap_content" android:layout_marginBottom="516.0dip" android:text="e" android:layout_marginEnd="292.0dip" app:layout_constraintBottom_toBottomOf="parent" app:layout_constraintEnd_toEndOf="parent"/>
+<TextView android:id="@id/flagPart22" android:layout_width="wrap_content" android:layout_height="wrap_content" android:layout_marginBottom="536.0dip" android:text="_" android:layout_marginEnd="284.0dip" app:layout_constraintBottom_toBottomOf="parent" app:layout_constraintEnd_toEndOf="parent"/>
+<TextView android:id="@id/flagPart23" android:layout_width="wrap_content" android:layout_height="wrap_content" android:layout_marginBottom="536.0dip" android:text="f" android:layout_marginEnd="268.0dip" app:layout_constraintBottom_toBottomOf="parent" app:layout_constraintEnd_toEndOf="parent"/>
+<TextView android:id="@id/flagPart24" android:layout_width="wrap_content" android:layout_height="wrap_content" android:layout_marginBottom="468.0dip" android:text="i" android:layout_marginEnd="316.0dip" app:layout_constraintBottom_toBottomOf="parent" app:layout_constraintEnd_toEndOf="parent"/>
+<TextView android:id="@id/flagPart25" android:layout_width="wrap_content" android:layout_height="wrap_content" android:layout_marginBottom="516.0dip" android:text="_" android:layout_marginEnd="260.0dip" app:layout_constraintBottom_toBottomOf="parent" app:layout_constraintEnd_toEndOf="parent"/>
+<TextView android:id="@id/flagPart26" android:layout_width="wrap_content" android:layout_height="wrap_content" android:layout_marginBottom="480.0dip" android:text="4" android:layout_marginEnd="240.0dip" app:layout_constraintBottom_toBottomOf="parent" app:layout_constraintEnd_toEndOf="parent"/>
+<TextView android:id="@id/flagPart27" android:layout_width="wrap_content" android:layout_height="wrap_content" android:layout_marginBottom="440.0dip" android:text="e" android:layout_marginEnd="224.0dip" app:layout_constraintBottom_toBottomOf="parent" app:layout_constraintEnd_toEndOf="parent"/>
+<TextView android:id="@id/flagPart28" android:layout_width="wrap_content" android:layout_height="wrap_content" android:layout_marginBottom="576.0dip" android:text="{" android:layout_marginEnd="324.0dip" app:layout_constraintBottom_toBottomOf="parent" app:layout_constraintEnd_toEndOf="parent"/>
+    )";
+    std::istringstream file_stream(xml_content); // Use this instead of std::ifstream for testing
+
+    // Or to read from an actual file:
+    // std::ifstream file_stream(filename);
+    // if (!file_stream.is_open()) {
+    //     std::cerr << "Error opening file: " << filename << std::endl;
+    //     return 1;
+    // }
+
+    std::string line;
+    std::vector<TextViewData> parsed_items;
+
+    while (std::getline(file_stream, line))
+    {
+        // Basic check if it's a TextView line we're interested in
+        if (line.find("<TextView") == std::string::npos || line.find("android:id=\"@id/flagPart") == std::string::npos)
+        {
+            continue;
+        }
+
+        TextViewData current_item;
+
+        std::string id_str = extractAttributeValue(line, "android:id=\"", "\"");
+        current_item.id_num = extractIdNum(id_str);
+        if (current_item.id_num == -1)
+        {
+            std::cerr << "Warning: Could not parse ID from line: " << line << std::endl;
+            continue;
+        }
+
+        current_item.text = extractAttributeValue(line, "android:text=\"", "\"");
+
+        std::string mb_str = extractAttributeValue(line, "android:layout_marginBottom=\"", "dip\"");
+        // Also handle if the attribute ends directly with quote without "dip"
+        if (mb_str.empty())
+            mb_str = extractAttributeValue(line, "android:layout_marginBottom=\"", "\"");
+        current_item.marginBottom = parseMarginValue(mb_str);
+
+        std::string me_str = extractAttributeValue(line, "android:layout_marginEnd=\"", "dip\"");
+        if (me_str.empty())
+            me_str = extractAttributeValue(line, "android:layout_marginEnd=\"", "\"");
+        current_item.marginEnd = parseMarginValue(me_str);
+
+        parsed_items.push_back(current_item);
+    }
+
+    // Sort the items by their ID number
+    std::sort(parsed_items.begin(), parsed_items.end());
+
+    // Create the final desired vector
+    std::vector<std::pair<std::string, std::pair<int, int>>> result_vector;
+    for (const auto &item : parsed_items)
+    {
+        result_vector.push_back({item.text, {item.marginBottom, item.marginEnd}});
+    }
+
+    // Print the result
+    std::cout << "Result: \n";
+    for (const auto &entry : result_vector)
+    {
+        std::cout << "Text: \"" << entry.first << "\", marginBottom: " << entry.second.first
+                  << ", marginEnd: " << entry.second.second << std::endl;
+    }
+
+    return 0;
+}
+```
+</Collapse>
+
+The result looks good!
+
+![android-1-c++](/image/byuctf-2025/android-1-c++.png)
+
+My job now is to **sort on marginEnd, then marginBottom in descending order**.
+
+Here is my code.
+
+```cpp
+bool myFirstSortFunction(std::vector<std::pair<std::string, std::pair<int, int>>> &result_vector)
+{
+    std::sort(result_vector.begin(), result_vector.end(), [](
+        const std::pair<std::string, std::pair<int, int>> &a, 
+        const std::pair<std::string, std::pair<int, int>> &b) { 
+            if(a.second.second == b.second.second)
+                return a.second.first < b.second.first;
+            return a.second.second < b.second.second; 
+    });
+    return true;
+}
+```
+
+We get the string `piece_0f_c4ke}` **(red part)**.
+
+![android-1-sort](/image/byuctf-2025/android-1-second-sort.png)
+
+Now, I will sort the **blue part** in this sequence `marginBottom -> marginEnd` **in descending order**.
+
+```cpp
+bool mySecondSortFunction(std::vector<std::pair<std::string, std::pair<int, int>>> &result_vector)
+{
+    std::sort(result_vector.begin(), result_vector.end(), [](
+        const std::pair<std::string, std::pair<int, int>> &a, 
+        const std::pair<std::string, std::pair<int, int>> &b){ 
+            if(a.second.first == b.second.first)
+                return a.second.second < b.second.second;
+            return a.second.first < b.second.first; 
+    });
+    return true;
+}
+```
+
+I successfully sort that **blue part**.
+
+![android-1-second-sort-success](/image/byuctf-2025/android-1-second-sort-success.png)
+
+Now, here is the full script to get the flag!
+
+<Collapse title="Full script">
+```cpp
+#include <iostream>
+#include <vector>
+#include <string>
+#include <fstream>
+#include <sstream>
+#include <algorithm>
+#include <utility>   // For std::pair
+#include <stdexcept> // For std::stoi, std::stod
+
+// Helper structure to hold parsed data before sorting
+struct TextViewData
+{
+    int id_num; // Numeric part of the id (e.g., 1 from flagPart1)
+    std::string text;
+    int marginBottom;
+    int marginEnd;
+
+    // For sorting
+    bool operator<(const TextViewData &other) const
+    {
+        return id_num < other.id_num;
+    }
+};
+
+// Helper function to extract attribute value
+// Example: extractAttributeValue(line, "android:text=\"", "\"")
+std::string extractAttributeValue(const std::string &line, const std::string &attr_start_token, const std::string &attr_end_token)
+{
+    size_t start_pos = line.find(attr_start_token);
+    if (start_pos == std::string::npos)
+    {
+        return ""; // Attribute not found
+    }
+    start_pos += attr_start_token.length();
+    size_t end_pos = line.find(attr_end_token, start_pos);
+    if (end_pos == std::string::npos)
+    {
+        return ""; // End token not found
+    }
+    return line.substr(start_pos, end_pos - start_pos);
+}
+
+// Helper function to convert margin string (e.g., "420.0dip") to int
+int parseMarginValue(const std::string &margin_str_full)
+{
+    if (margin_str_full.empty())
+        return 0;
+    // Remove "dip"
+    std::string num_str = margin_str_full;
+    size_t dip_pos = num_str.rfind("dip");
+    if (dip_pos != std::string::npos)
+    {
+        num_str.erase(dip_pos);
+    }
+    try
+    {
+        // Convert to double first to handle ".0", then to int
+        return static_cast<int>(std::stod(num_str));
+    }
+    catch (const std::invalid_argument &ia)
+    {
+        std::cerr << "Invalid argument for margin conversion: " << margin_str_full << std::endl;
+    }
+    catch (const std::out_of_range &oor)
+    {
+        std::cerr << "Out of range for margin conversion: " << margin_str_full << std::endl;
+    }
+    return 0; // Default or error value
+}
+
+// Helper function to extract the numeric part from an ID like "flagPart12"
+int extractIdNum(const std::string &id_full_str)
+{
+    if (id_full_str.empty())
+        return -1; // Invalid ID
+    // Expecting format like "@id/flagPartX"
+    std::string id_val = id_full_str;
+    size_t prefix_pos = id_val.find("@id/");
+    if (prefix_pos != std::string::npos)
+    {
+        id_val = id_val.substr(prefix_pos + 4); // Length of "@id/"
+    }
+
+    // Now id_val should be something like "flagPart12"
+    // Find the start of the number
+    size_t num_start = 0;
+    while (num_start < id_val.length() && !isdigit(id_val[num_start]))
+    {
+        num_start++;
+    }
+    if (num_start == id_val.length())
+        return -1; // No number found
+
+    try
+    {
+        return std::stoi(id_val.substr(num_start));
+    }
+    catch (const std::invalid_argument &ia)
+    {
+        std::cerr << "Invalid argument for ID number conversion: " << id_val.substr(num_start) << std::endl;
+    }
+    catch (const std::out_of_range &oor)
+    {
+        std::cerr << "Out of range for ID number conversion: " << id_val.substr(num_start) << std::endl;
+    }
+    return -1; // Default or error value
+}
+
+bool myFirstSortFunction(std::vector<std::pair<std::string, std::pair<int, int>>> &result_vector)
+{
+    std::sort(result_vector.begin(), result_vector.end(), [](const std::pair<std::string, std::pair<int, int>> &a, const std::pair<std::string, std::pair<int, int>> &b)
+              { 
+            if(a.second.second == b.second.second)
+                return a.second.first < b.second.first;
+            return a.second.second < b.second.second; });
+    return true;
+}
+
+bool mySecondSortFunction(std::vector<std::pair<std::string, std::pair<int, int>>> &result_vector)
+{
+    std::sort(result_vector.begin(), result_vector.end(), [](const std::pair<std::string, std::pair<int, int>> &a, const std::pair<std::string, std::pair<int, int>> &b)
+              { 
+            if(a.second.first == b.second.first)
+                return a.second.second < b.second.second;
+            return a.second.first < b.second.first; });
+    return true;
+}
+
+int main()
+{
+    std::string filename = "input.xml"; // Or pass as argument
+
+    // For demonstration, using a stringstream with your provided data
+    std::string xml_content = R"(
+<TextView android:id="@id/flagPart1" android:layout_width="wrap_content" android:layout_height="wrap_content" android:layout_marginBottom="420.0dip" android:text="}" android:layout_marginEnd="216.0dip" app:layout_constraintBottom_toBottomOf="parent" app:layout_constraintEnd_toEndOf="parent"/>
+<TextView android:id="@id/flagPart2" android:layout_width="wrap_content" android:layout_height="wrap_content" android:layout_marginBottom="616.0dip" android:text="t" android:layout_marginEnd="340.0dip" app:layout_constraintBottom_toBottomOf="parent" app:layout_constraintEnd_toEndOf="parent"/>
+<TextView android:id="@id/flagPart3" android:layout_width="wrap_content" android:layout_height="wrap_content" android:layout_marginBottom="556.0dip" android:text="a" android:layout_marginEnd="332.0dip" app:layout_constraintBottom_toBottomOf="parent" app:layout_constraintEnd_toEndOf="parent"/>
+<TextView android:id="@id/flagPart4" android:layout_width="wrap_content" android:layout_height="wrap_content" android:layout_marginBottom="676.0dip" android:text="y" android:layout_marginEnd="368.0dip" app:layout_constraintBottom_toBottomOf="parent" app:layout_constraintEnd_toEndOf="parent"/>
+<TextView android:id="@id/flagPart5" android:layout_width="wrap_content" android:layout_height="wrap_content" android:layout_marginBottom="500.0dip" android:text="c" android:layout_marginEnd="252.0dip" app:layout_constraintBottom_toBottomOf="parent" app:layout_constraintEnd_toEndOf="parent"/>
+<TextView android:id="@id/flagPart6" android:layout_width="wrap_content" android:layout_height="wrap_content" android:layout_marginBottom="636.0dip" android:text="c" android:layout_marginEnd="348.0dip" app:layout_constraintBottom_toBottomOf="parent" app:layout_constraintEnd_toEndOf="parent"/>
+<TextView android:id="@id/flagPart7" android:layout_width="wrap_content" android:layout_height="wrap_content" android:layout_marginBottom="436.0dip" android:text="d" android:layout_marginEnd="364.0dip" app:layout_constraintBottom_toBottomOf="parent" app:layout_constraintEnd_toEndOf="parent"/>
+<TextView android:id="@id/flagPart8" android:layout_width="wrap_content" android:layout_height="wrap_content" android:layout_marginBottom="496.0dip" android:text="r" android:layout_marginEnd="348.0dip" app:layout_constraintBottom_toBottomOf="parent" app:layout_constraintEnd_toEndOf="parent"/>
+<TextView android:id="@id/flagPart9" android:layout_width="wrap_content" android:layout_height="wrap_content" android:layout_marginBottom="536.0dip" android:text="n" android:layout_marginEnd="336.0dip" app:layout_constraintBottom_toBottomOf="parent" app:layout_constraintEnd_toEndOf="parent"/>
+<TextView android:id="@id/flagPart10" android:layout_width="wrap_content" android:layout_height="wrap_content" android:layout_marginBottom="456.0dip" android:text="i" android:layout_marginEnd="360.0dip" app:layout_constraintBottom_toBottomOf="parent" app:layout_constraintEnd_toEndOf="parent"/>
+<TextView android:id="@id/flagPart11" android:layout_width="wrap_content" android:layout_height="wrap_content" android:layout_marginBottom="536.0dip" android:text="0" android:layout_marginEnd="276.0dip" app:layout_constraintBottom_toBottomOf="parent" app:layout_constraintEnd_toEndOf="parent"/>
+<TextView android:id="@id/flagPart12" android:layout_width="wrap_content" android:layout_height="wrap_content" android:layout_marginBottom="516.0dip" android:text="d" android:layout_marginEnd="340.0dip" app:layout_constraintBottom_toBottomOf="parent" app:layout_constraintEnd_toEndOf="parent"/>
+<TextView android:id="@id/flagPart13" android:layout_width="wrap_content" android:layout_height="wrap_content" android:layout_marginBottom="460.0dip" android:text="k" android:layout_marginEnd="232.0dip" app:layout_constraintBottom_toBottomOf="parent" app:layout_constraintEnd_toEndOf="parent"/>
+<TextView android:id="@id/flagPart14" android:layout_width="wrap_content" android:layout_height="wrap_content" android:layout_marginBottom="656.0dip" android:text="u" android:layout_marginEnd="356.0dip" app:layout_constraintBottom_toBottomOf="parent" app:layout_constraintEnd_toEndOf="parent"/>
+<TextView android:id="@id/flagPart15" android:layout_width="wrap_content" android:layout_height="wrap_content" android:layout_marginBottom="452.0dip" android:text="p" android:layout_marginEnd="320.0dip" app:layout_constraintBottom_toBottomOf="parent" app:layout_constraintEnd_toEndOf="parent"/>
+<TextView android:id="@id/flagPart16" android:layout_width="wrap_content" android:layout_height="wrap_content" android:layout_marginBottom="476.0dip" android:text="o" android:layout_marginEnd="352.0dip" app:layout_constraintBottom_toBottomOf="parent" app:layout_constraintEnd_toEndOf="parent"/>
+<TextView android:id="@id/flagPart17" android:layout_width="wrap_content" android:layout_height="wrap_content" android:layout_marginBottom="500.0dip" android:text="c" android:layout_marginEnd="300.0dip" app:layout_constraintBottom_toBottomOf="parent" app:layout_constraintEnd_toEndOf="parent"/>
+<TextView android:id="@id/flagPart18" android:layout_width="wrap_content" android:layout_height="wrap_content" android:layout_marginBottom="596.0dip" android:text="f" android:layout_marginEnd="332.0dip" app:layout_constraintBottom_toBottomOf="parent" app:layout_constraintEnd_toEndOf="parent"/>
+<TextView android:id="@id/flagPart19" android:layout_width="wrap_content" android:layout_height="wrap_content" android:layout_marginBottom="484.0dip" android:text="e" android:layout_marginEnd="308.0dip" app:layout_constraintBottom_toBottomOf="parent" app:layout_constraintEnd_toEndOf="parent"/>
+<TextView android:id="@id/flagPart20" android:layout_width="wrap_content" android:layout_height="wrap_content" android:layout_marginBottom="436.0dip" android:text="_" android:layout_marginEnd="328.0dip" app:layout_constraintBottom_toBottomOf="parent" app:layout_constraintEnd_toEndOf="parent"/>
+<TextView android:id="@id/flagPart21" android:layout_width="wrap_content" android:layout_height="wrap_content" android:layout_marginBottom="516.0dip" android:text="e" android:layout_marginEnd="292.0dip" app:layout_constraintBottom_toBottomOf="parent" app:layout_constraintEnd_toEndOf="parent"/>
+<TextView android:id="@id/flagPart22" android:layout_width="wrap_content" android:layout_height="wrap_content" android:layout_marginBottom="536.0dip" android:text="_" android:layout_marginEnd="284.0dip" app:layout_constraintBottom_toBottomOf="parent" app:layout_constraintEnd_toEndOf="parent"/>
+<TextView android:id="@id/flagPart23" android:layout_width="wrap_content" android:layout_height="wrap_content" android:layout_marginBottom="536.0dip" android:text="f" android:layout_marginEnd="268.0dip" app:layout_constraintBottom_toBottomOf="parent" app:layout_constraintEnd_toEndOf="parent"/>
+<TextView android:id="@id/flagPart24" android:layout_width="wrap_content" android:layout_height="wrap_content" android:layout_marginBottom="468.0dip" android:text="i" android:layout_marginEnd="316.0dip" app:layout_constraintBottom_toBottomOf="parent" app:layout_constraintEnd_toEndOf="parent"/>
+<TextView android:id="@id/flagPart25" android:layout_width="wrap_content" android:layout_height="wrap_content" android:layout_marginBottom="516.0dip" android:text="_" android:layout_marginEnd="260.0dip" app:layout_constraintBottom_toBottomOf="parent" app:layout_constraintEnd_toEndOf="parent"/>
+<TextView android:id="@id/flagPart26" android:layout_width="wrap_content" android:layout_height="wrap_content" android:layout_marginBottom="480.0dip" android:text="4" android:layout_marginEnd="240.0dip" app:layout_constraintBottom_toBottomOf="parent" app:layout_constraintEnd_toEndOf="parent"/>
+<TextView android:id="@id/flagPart27" android:layout_width="wrap_content" android:layout_height="wrap_content" android:layout_marginBottom="440.0dip" android:text="e" android:layout_marginEnd="224.0dip" app:layout_constraintBottom_toBottomOf="parent" app:layout_constraintEnd_toEndOf="parent"/>
+<TextView android:id="@id/flagPart28" android:layout_width="wrap_content" android:layout_height="wrap_content" android:layout_marginBottom="576.0dip" android:text="{" android:layout_marginEnd="324.0dip" app:layout_constraintBottom_toBottomOf="parent" app:layout_constraintEnd_toEndOf="parent"/>
+    )";
+    std::istringstream file_stream(xml_content); // Use this instead of std::ifstream for testing
+
+    // Or to read from an actual file:
+    // std::ifstream file_stream(filename);
+    // if (!file_stream.is_open()) {
+    //     std::cerr << "Error opening file: " << filename << std::endl;
+    //     return 1;
+    // }
+
+    std::string line;
+    std::vector<TextViewData> parsed_items;
+
+    while (std::getline(file_stream, line))
+    {
+        // Basic check if it's a TextView line we're interested in
+        if (line.find("<TextView") == std::string::npos || line.find("android:id=\"@id/flagPart") == std::string::npos)
+        {
+            continue;
+        }
+
+        TextViewData current_item;
+
+        std::string id_str = extractAttributeValue(line, "android:id=\"", "\"");
+        current_item.id_num = extractIdNum(id_str);
+        if (current_item.id_num == -1)
+        {
+            std::cerr << "Warning: Could not parse ID from line: " << line << std::endl;
+            continue;
+        }
+
+        current_item.text = extractAttributeValue(line, "android:text=\"", "\"");
+
+        std::string mb_str = extractAttributeValue(line, "android:layout_marginBottom=\"", "dip\"");
+        // Also handle if the attribute ends directly with quote without "dip"
+        if (mb_str.empty())
+            mb_str = extractAttributeValue(line, "android:layout_marginBottom=\"", "\"");
+        current_item.marginBottom = parseMarginValue(mb_str);
+
+        std::string me_str = extractAttributeValue(line, "android:layout_marginEnd=\"", "dip\"");
+        if (me_str.empty())
+            me_str = extractAttributeValue(line, "android:layout_marginEnd=\"", "\"");
+        current_item.marginEnd = parseMarginValue(me_str);
+
+        parsed_items.push_back(current_item);
+    }
+
+    // Sort the items by their ID number
+    std::sort(parsed_items.begin(), parsed_items.end());
+
+    // Create the final desired vector
+    std::vector<std::pair<std::string, std::pair<int, int>>> result_vector;
+    for (const auto &item : parsed_items)
+    {
+        result_vector.push_back({item.text, {item.marginBottom, item.marginEnd}});
+    }
+
+    // Print the result
+    // std::cout << "Result: \n";
+    // for (const auto &entry : result_vector)
+    //{
+    //    std::cout << "Text: \"" << entry.first << "\", marginBottom: " << entry.second.first
+    //              << ", marginEnd: " << entry.second.second << std::endl;
+    //}
+
+    myFirstSortFunction(result_vector);
+    // std::cout << "Flag: \n";
+    // for (auto it = result_vector.rbegin(); it != result_vector.rend(); ++it)
+    //{
+    //     std::cout << "Text: \"" << it->first << "\", marginBottom: " << it->second.first
+    //               << ", marginEnd: " << it->second.second << std::endl;
+    // }
+
+    std::vector<std::pair<std::string, std::pair<int, int>>> tmp;
+    for (int i = 14; i < result_vector.size(); ++i)
+        tmp.push_back(result_vector[i]);
+
+    mySecondSortFunction(tmp);
+    // std::cout << "Flag: \n";
+    // for (auto it = tmp.rbegin(); it != tmp.rend(); ++it)
+    //{
+    //     std::cout << "Text: \"" << it->first << "\", marginBottom: " << it->second.first
+    //               << ", marginEnd: " << it->second.second << std::endl;
+    // }
+
+    std::cout << "Flag: b";
+    for (auto it = tmp.rbegin(); it != tmp.rend(); ++it)
+    {
+        std::cout << it->first;
+    }
+
+    for (int i = 13; i >= 0; --i)
+    {
+        std::cout << result_vector[i].first;
+    }
+
+    return 0;
+}
+```
+</Collapse>
+
+![android-1-flag](/image/byuctf-2025/android-1-flag.png)
+
+Honestly, I didn't have much experience with **Android Studio** during the comp, so I was banging my head around **5-6 hours** with this **double-sorting** solution. I was wondering how it would work with **Android Studio** and tried that again myself, and it is SOO easy to get the flag :)
+
+### Solution Using Android Studio
+
+Like the previous solution, I use the `apktool` to get `activity_main.xml` from the `.apk` file.
+
+![android-1-apktool-again](/image/byuctf-2025/android-1-apktool-again.png)
+
+Next, I open **Android Studio** and create a new **No Activity** project using `File` &rarr; `New` &rarr; `New Project...`.
+
+![android-1-android-studio](/image/byuctf-2025/android-1-android-studio.png)
+
+When the new project is created, I go to `app` &rarr; `res` and create a new folder named `layout` and copy the file `activity_main.xml` **(get from `apktool`)** to that newly-created folder.
+
+![android-1-android-studio-solution](/image/byuctf-2025/android-1-android-studio-solution.png)
+
+Finally, open that file and we get our flag :)
+
+![android-1-android-studio](/image/byuctf-2025/android-1-flag-android-studio.png)
+
+Flag: `byuctf{android_piece_0f_c4ke}`
+
+## Baby Android 2
+
+### Description 
+
+![android-2-description](/image/byuctf-2025/android-2-description.png)
+
+### Analysis
+
+![android-2-files](/image/byuctf-2025/android-2-files.png)
+
+There is an `.apk` file, so I open it in **Android Studio**.
+
+![android-2-test](/image/byuctf-2025/android-2-test.png)
+
+We get the **wrong message**! Let's open that `.apk` file with `jadx` and navigate to **MainActivity**.
+
+![android-2-main-activity](/image/byuctf-2025/android-2-main-activity.png)
+
+We are calling function `check` from **FlagChecker** to check our input. From here, we will get the **success message**.
+
+![android-2-check](/image/byuctf-2025/android-2-check.png)
+
+The `check` function in **FlagChecker** is a `native` function, which means **this function is loading from an external library**. In this case, it is loading from the library `libbabyandroid.so` **(blue part)**.
+
+Since an `.apk` file is **a compressed file** that contains everything the app needs, including code, resources, and native libraries. We can change the `.apk` file to `.zip` file and **unzip** it to get the `libbabyandroid.so` file.
+
+![android-2-unzip](/image/byuctf-2025/android-2-unzip.png)
+
+Navigate to `lib` folder and we get `libbabyandroid.so`. 
+
+![android-2-lib](/image/byuctf-2025/android-2-lib.png)
+
+Let's open that `.so` file in IDA and have a look at `check` function.
+
+![android-2-check-in-ida](/image/byuctf-2025/android-2-check-in-ida.png)
+
+To get the **success message**, this `check` function must return `1`. This can only be achieved when **the length of string is 23** and **each char must be equal to `aBycnuAacglyTtM[i * i % 47]`**.
+
+Check the string `aBycnuAacglyTtM` in IDA, it is a **read only string** contains the following data.
+
+![android-2-string](/image/byuctf-2025/android-2-string.png)
+
+### Solution 
+
+From what we have analyzed, we can get **the correct input** by **running a loop 23 times** and get the character from the string `aBycnuAacglyTtM` at index `i * i % 47` by each iteration.
+
+Here is the script.
+
+```python 
+aBycnuAacglyTtM = "bycnu)_aacGly~}tt+?=<_ML?f^i_vETkG+b{nDJrVp6=)="
+
+flag = ""
+
+for i in range(0, 23):
+    flag += aBycnuAacglyTtM[i * i % 47]
+
+print(flag)
+```
+
+Flag: `byuctf{c++_in_an_apk??}`
