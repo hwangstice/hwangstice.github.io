@@ -441,8 +441,8 @@ bool myFirstSortFunction(std::vector<std::pair<std::string, std::pair<int, int>>
         const std::pair<std::string, std::pair<int, int>> &a, 
         const std::pair<std::string, std::pair<int, int>> &b) { 
             if(a.second.second == b.second.second)
-                return a.second.first < b.second.first;
-            return a.second.second < b.second.second; 
+                return a.second.first > b.second.first;
+            return a.second.second > b.second.second; 
     });
     return true;
 }
@@ -461,8 +461,8 @@ bool mySecondSortFunction(std::vector<std::pair<std::string, std::pair<int, int>
         const std::pair<std::string, std::pair<int, int>> &a, 
         const std::pair<std::string, std::pair<int, int>> &b){ 
             if(a.second.first == b.second.first)
-                return a.second.second < b.second.second;
-            return a.second.first < b.second.first; 
+                return a.second.second > b.second.second;
+            return a.second.first > b.second.first; 
     });
     return true;
 }
@@ -589,8 +589,8 @@ bool myFirstSortFunction(std::vector<std::pair<std::string, std::pair<int, int>>
     std::sort(result_vector.begin(), result_vector.end(), [](const std::pair<std::string, std::pair<int, int>> &a, const std::pair<std::string, std::pair<int, int>> &b)
               { 
             if(a.second.second == b.second.second)
-                return a.second.first < b.second.first;
-            return a.second.second < b.second.second; });
+                return a.second.first > b.second.first;
+            return a.second.second > b.second.second; });
     return true;
 }
 
@@ -599,8 +599,8 @@ bool mySecondSortFunction(std::vector<std::pair<std::string, std::pair<int, int>
     std::sort(result_vector.begin(), result_vector.end(), [](const std::pair<std::string, std::pair<int, int>> &a, const std::pair<std::string, std::pair<int, int>> &b)
               { 
             if(a.second.first == b.second.first)
-                return a.second.second < b.second.second;
-            return a.second.first < b.second.first; });
+                return a.second.second > b.second.second;
+            return a.second.first > b.second.first; });
     return true;
 }
 
