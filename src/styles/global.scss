@@ -3,6 +3,16 @@
 @tailwind components;
 @tailwind utilities;
 
+/* Color scheme configuration to prevent Chrome's auto dark theme */
+:root,
+[data-theme-type="light"] {
+  color-scheme: light dark; /* This prevents Chrome's auto dark theme from taking effect */
+}
+
+[data-theme-type="dark"] {
+  color-scheme: dark;
+}
+
 /* Global styles with nesting support */
 html {
   @apply scroll-smooth;
@@ -14,26 +24,6 @@ kbd {
 
 code {
   font-size: 0.875em;
-}
-
-/*Fix problem with math rendering*/
-.katex .katex-mathml {
-  position: absolute;
-  clip: rect(1px, 1px, 1px, 1px);
-  padding: 0;
-  border: 0;
-  height: 1px;
-  width: 1px;
-  overflow: hidden;
-  white-space: nowrap;
-}
-
-.katex-display {
-  font-family: 'Book Antiqua', serif;
-  display: block;
-  text-align: center;
-  margin: 1em 0;
-  font-size: 1.2em;
 }
 
 .scrollbar-none {
@@ -219,11 +209,7 @@ code {
 
   &-content {
     @apply max-h-0 overflow-y-auto;
-    transition: max-height 0.8s cubic-bezier(0.22, 1, 0.36, 1);
-
-    &.expanded {
-      @apply max-h-[500px];
-    }
+    transition: max-height 0.8s;
   }
 }
 
@@ -253,7 +239,7 @@ code {
   }
 
   &-link {
-    @apply flex justify-between items-center p-3 rounded-lg bg-base-200/50;
+    @apply flex justify-between items-center p-3 rounded-lg bg-base-200/50 transition-transform;
 
     &:hover {
       @apply bg-base-200 translate-x-1;

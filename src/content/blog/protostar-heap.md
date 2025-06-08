@@ -1229,4 +1229,4 @@ Nice :>
 ### References
 
 - <a href="https://phrack.org/issues/57/9#article" target="_blank">"Once upon a free()"</a>
-- <a href="https://gist.github.com/dathwang/89a6b012828ed26f6cb2a7961908d333" target="_blank">dlmalloc - version from 2001</a>
+- <a href="https://gist.github.com/d7rub1k/89a6b012828ed26f6cb2a7961908d333" target="_blank">dlmalloc - version from 2001</a>

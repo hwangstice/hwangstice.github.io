@@ -11,7 +11,7 @@ site:
     code: github-dark # 代码块的主题 https://shiki.style/themes
   date_format: ddd MMM DD YYYY # 日期格式设置，支持自定义格式
   blog: # 博客相关配置
-    pageSize: 8 # 每页显示的文章数量
+    pageSize: 5 # 每页显示的文章数量
   menu: # 菜单配置
     - id: home # 菜单项的唯一标识符
       text: Home # 菜单项显示的文本
@@ -37,7 +37,7 @@ site:
         - id: tech
           text: Tech blogs
           href: /blog/category/tech
-          svg: "material-symbols:deployed-code-outline"
+          svg: "material-symbols:unknown-document-outline-rounded"
           target: _self
         - id: life
           text: Life blogs
@@ -63,12 +63,12 @@ site:
 
 # 用户的个人信息
 user:
-  name: Hwangstice # 用户名
-  site: "https://dathwang.github.io/" # 用户的网站链接
+  name: d7rub1k # 用户名
+  site: "https://d7rub1k.github.io/" # 用户的网站链接
   avatar: /profile.webp # 用户头像路径
   sidebar: # 侧边栏配置
     social:
-      - href: "https://github.com/dathwang"
+      - href: "https://github.com/d7rub1k"
         ariaLabel: Github
         title: Github
         svg: "ri:github-line"
@@ -86,7 +86,7 @@ user:
         svg: "ri:spotify-line"
   footer:
     social:
-      - href: "https://github.com/dathwang"
+      - href: "https://github.com/d7rub1k"
         ariaLabel: Github
         title: Github
         svg: "ri:github-line"

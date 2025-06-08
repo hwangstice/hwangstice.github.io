@@ -26,5 +26,7 @@ pnpm-debug.log*
 # pagefind
 public/pagefind/
 
-# how to use .mdx
-how-to-use-mdx.mdx
+# how to use mdx
+/src/content/blog/how-to-use-mdx.mdx
+
+/src/content/blog/reversing.kr.mdx

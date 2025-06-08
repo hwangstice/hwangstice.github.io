@@ -49,8 +49,5 @@
     "scss",
     "pcss",
     "postcss"
-  ],
-  "files.associations": {
-    "iostream": "cpp"
-  }
+  ]
 }

@@ -8,9 +8,9 @@ import FriendCard from "@/components/mdx/FriendCard.astro";
 
 <BaseLayout title="Friends">
   <MainCard
-    title="Friends"
-    description="A collection of links to friends."
-    image="/about.webp"
+    title="Friends & Resources"
+    description=""
+    textOverlay="FRIENDS"
     infoIcon="lucide:link"
   >
     <div class="space-y-10">
@@ -45,6 +45,85 @@ import FriendCard from "@/components/mdx/FriendCard.astro";
           />
         </div>
       </section>
+
+      <!-- Contributors Section -->
+      <section>
+        <h2 class="text-2xl font-bold mb-6 flex items-center gap-2">
+          <Icon name="lucide:git-pull-request" class="w-6 h-6 text-primary" />
+          <span>Contributors</span>
+        </h2>
+
+        <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-6">
+          <FriendCard
+            name=""
+            avatar=""
+            description=""
+            url=""
+            type="contributor"
+          />
+        </div>
+      </section>
+
+      <!-- Useful Resources Section -->
+      <section>
+        <h2 class="text-2xl font-bold mb-6 flex items-center gap-2">
+          <Icon name="lucide:bookmark" class="w-6 h-6 text-primary" />
+          <span>Useful Resources</span>
+        </h2>
+
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+          <LinkCard
+            title="Astro Documentation"
+            desc="The official documentation for Astro, covering everything from getting started to advanced techniques."
+            url="https://docs.astro.build"
+            icon="simple-icons:astro"
+            categories={["Docs", "Learning", "Reference"]}
+          />
+
+          <LinkCard
+            title="Tailwind CSS Documentation"
+            desc="Learn how to use Tailwind's utility classes to style your website without writing CSS."
+            url="https://tailwindcss.com/docs"
+            icon="simple-icons:tailwindcss"
+            categories={["Docs", "CSS", "Reference"]}
+          />
+
+          <LinkCard
+            title="DaisyUI Components"
+            desc="Browse DaisyUI's component library and learn how to use them in your project."
+            url="https://daisyui.com/components/"
+            icon="simple-icons:daisyui"
+            categories={["Components", "UI", "Reference"]}
+          />
+
+          <LinkCard
+            title="TypeScript Handbook"
+            desc="The TypeScript Handbook is a comprehensive guide to the TypeScript language."
+            url="https://www.typescriptlang.org/docs/handbook/intro.html"
+            icon="simple-icons:typescript"
+            categories={["Docs", "TypeScript", "Reference"]}
+          />
+        </div>
+      </section>
+
+      <div class="divider my-8">
+        <Icon name="lucide:heart" class="w-10 h-10 text-primary" />
+      </div>
+
+      <div class="text-center">
+        <p class="text-base-content/80 mb-4">
+          haha add text here
+        </p>
+        <a
+          href=""
+          target="_blank"
+          rel="noopener noreferrer"
+          class="btn btn-primary gap-2"
+        >
+          <Icon name="lucide:github" class="w-5 h-5" />
+          <span>Contribute on GitHub</span>
+        </a>
+      </div>
     </div>
   </MainCard>
 </BaseLayout>
