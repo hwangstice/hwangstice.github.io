@@ -50,6 +50,9 @@ importers:
       astro-vtbot:
         specifier: ^2.1.3
         version: 2.1.3
+      css-select:
+        specifier: ^5.1.0
+        version: 5.1.0
       dayjs:
         specifier: ^1.11.13
         version: 1.11.13
