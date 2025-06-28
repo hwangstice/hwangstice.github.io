@@ -63,12 +63,12 @@ site:
 
 # 用户的个人信息
 user:
-  name: d7rub1k # 用户名
-  site: "https://d7rub1k.github.io/" # 用户的网站链接
+  name: dathwang # 用户名
+  site: "https://hwangstice.github.io/" # 用户的网站链接
   avatar: /profile.webp # 用户头像路径
   sidebar: # 侧边栏配置
     social:
-      - href: "https://github.com/d7rub1k"
+      - href: "https://github.com/hwangstice"
         ariaLabel: Github
         title: Github
         svg: "ri:github-line"
@@ -86,7 +86,7 @@ user:
         svg: "ri:spotify-line"
   footer:
     social:
-      - href: "https://github.com/d7rub1k"
+      - href: "https://github.com/hwangstice"
         ariaLabel: Github
         title: Github
         svg: "ri:github-line"
