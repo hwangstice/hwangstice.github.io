@@ -65,7 +65,7 @@ site:
 user:
   name: dathwang # 用户名
   site: "https://hwangstice.github.io/" # 用户的网站链接
-  avatar: /profile.webp # 用户头像路径
+  avatar: /cat.jpg # 用户头像路径
   sidebar: # 侧边栏配置
     social:
       - href: "https://github.com/hwangstice"
