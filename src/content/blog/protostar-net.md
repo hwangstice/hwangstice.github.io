@@ -2,7 +2,7 @@
 title: "Protostar - Net"
 description: "Writeup for Protostar Net"
 pubDate: "March 23 2025"
-image: /image/blog-cover/net.jpg
+image: /image/blog-cover/net.gif
 categories:
   - tech
 tags:
