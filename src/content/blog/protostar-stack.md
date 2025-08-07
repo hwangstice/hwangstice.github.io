@@ -2,7 +2,7 @@
 title: "Protostar - Stack"
 description: "Milestone - March 2, 2025"
 pubDate: "March 02 2025"
-image: /image/blog-cover/stack.jpg
+image: /image/blog-cover/stack.gif
 categories:
   - tech
 tags:
