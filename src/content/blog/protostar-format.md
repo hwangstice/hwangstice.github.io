@@ -2,7 +2,7 @@
 title: "Protostar - Format String"
 description: "Writeup for Protostar Format String"
 pubDate: "March 09 2025"
-image: /image/blog-cover/format.gif
+image: /image/blog-cover/format.jpg
 categories:
   - tech
 tags:
