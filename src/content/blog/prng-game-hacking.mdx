@@ -1,0 +1,540 @@
+---
+title: "My First Game Hacking"
+description: "Reversing a Pseudo-Random Number Generator Game"
+pubDate: "August 13 2025"
+image: /image/blog-cover/prng-game-hacking.gif
+categories:
+  - tech
+tags:
+  - Reverse
+  - PRNG 
+  - Game Hacking
+---
+
+import Collapse from "../../components/mdx/Collapse.astro";
+import Diff from "../../components/mdx/Diff.astro";
+import Error from "../../components/mdx/Error.astro";
+import Info from "../../components/mdx/Info.astro";
+import Kbd from "../../components/mdx/Kbd.astro";
+import Success from "../../components/mdx/Success.astro";
+import Warning from "../../components/mdx/Warning.astro";
+import TimeLine from "../../components/mdx/TimeLine.astro";
+import LinkCard from "../../components/mdx/LinkCard.astro";
+import rehypeKatex from 'rehype-katex'
+import remarkMath from 'remark-math'
+
+## TL;DR
+
+This is my first time playing around with **Game Hacking**. It is so damm crazy, and insanely fun. The game I am going to tackle is called **Adventure**, and it sends me on a wild journey to discover that it uses **a deterministic seed** to generate the whole thing. It's crazy, it's fun, and it's one of the most exciting experiences I've had so far.
+
+## Overview
+
+**Adventure** is an **UWP (Universal Windows Platform) App**. This means it doesn't run in background when it is closed like some desktop apps. Instead, it goes into a **suspended state** to save system resources. If the system needs memory, it might **terminate (kill)** the app without warning.
+
+<div style={{
+  display: 'flex',
+  justifyContent: 'center',
+  marginTop: '2rem'
+}}>
+  <video
+    controls
+    width="920"
+    height="240"
+    style={{
+      borderRadius: '12px',
+      boxShadow: '0 4px 12px rgba(0, 0, 0, 0.1)'
+    }}
+    src="/image/prng-game-hacking/playy.mp4"
+    type="video/mp4"
+  >
+    Your browser does not support the video tag.
+  </video>
+</div>
+
+This game is similar to **Chicken Invaders**, which is a popular game! Honestly, this game is really hard. The monsters keep spawning and moving at lighting speed. I would feel myself a great player if I killed 30+ monsters.
+
+## Initial Thinking
+
+As always, I load the game into **IDA**, open the **Strings Tab** and start scanning for anything interesting.
+
+![strings-tab](/image/prng-game-hacking/strings-tab.png)
+
+The strings **"Flag1 is"** and **"Flag2 is"** instantly catch my attention, and both are referenced inside `sub_403890`.
+
+![xref-strings](/image/prng-game-hacking/xref-strings.png)
+
+I trace the logic and see that when the score hits `0xDDB`, the game reaches **Flag1**.
+
+![flag1](/image/prng-game-hacking/flag1.png)
+
+The same logic applies to **Flag2**, but the score needs to be `0x31159CD`.
+
+![flag2](/image/prng-game-hacking/flag2.png)
+
+Since the game makes it impossible to get to the score `0xDDB`, it's time for some hacking!
+
+## Auto-Kill Mechanism
+
+While looking at the **pseudo-code** of `sub_403890` in **IDA**, I see a pretty suspicious **infinite loop**.
+
+![infinite-loop](/image/prng-game-hacking/infinite-loop.png)
+
+What is it checking? I can only reach the **score checking state** for **Flag1** when some specific conditions are met.
+
+![break-condition](/image/prng-game-hacking/break-condition.png)
+
+So, I use **x32dbg** to set **bp** there and start checking.
+
+![bp](/image/prng-game-hacking/bp.png)
+
+I notice that whenever I press **the space bar** to spawn **a bullet**, the program stops right at those breakpoints. When I continue execution with **[F9]**, the bullet spawns.
+
+<div style={{
+  display: 'flex',
+  justifyContent: 'center',
+  marginTop: '2rem'
+}}>
+  <video
+    controls
+    width="920"
+    height="240"
+    style={{
+      borderRadius: '12px',
+      boxShadow: '0 4px 12px rgba(0, 0, 0, 0.1)'
+    }}
+    src="/image/prng-game-hacking/bullet.mp4"
+    type="video/mp4"
+  >
+    Your browser does not support the video tag.
+  </video>
+</div>
+
+I also see that **the breakpoints keep getting hit while the bullet is flying**. Does this mean that it checks whether the bullet hits the devil?
+
+To test my assumption, I **disable all the bps above** so **I can spawn bullets freely**, and then I set another **bp** where the instruction `ja adventure.113C8E` jumps to. 
+
+![another-bp](/image/prng-game-hacking/another-bp.png)
+
+Nice, it works exactly as expected.
+
+<div style={{
+  display: 'flex',
+  justifyContent: 'center',
+  marginTop: '2rem'
+}}>
+  <video
+    controls
+    width="920"
+    height="240"
+    style={{
+      borderRadius: '12px',
+      boxShadow: '0 4px 12px rgba(0, 0, 0, 0.1)'
+    }}
+    src="/image/prng-game-hacking/bullet-hit-devil.mp4"
+    type="video/mp4"
+  >
+    Your browser does not support the video tag.
+  </video>
+</div>
+
+So, this **infinite loop is checking if a bullet hits a devil**. If it does, the devil is killed and the score increases.
+
+Since `ja adventure.113C8E` is the only instruction that jumps to the kill-and-score section, I patch it to `jmp adventure.113C8E`. For the three instrucitons `jbe adventure.113C26`, I patch them to `jbe adventure.113C24`. 
+
+![auto-kill-patch](/image/prng-game-hacking/auto-kill-patch.png)
+
+By doing so, I completely **bypass the hit detection**. Now, I can kill the devil instantly and my score increases rapidly.
+
+<div style={{
+  display: 'flex',
+  justifyContent: 'center',
+  marginTop: '2rem'
+}}>
+  <video
+    controls
+    width="920"
+    height="240"
+    style={{
+      borderRadius: '12px',
+      boxShadow: '0 4px 12px rgba(0, 0, 0, 0.1)'
+    }}
+    src="/image/prng-game-hacking/auto-kill.mp4"
+    type="video/mp4"
+  >
+    Your browser does not support the video tag.
+  </video>
+</div>
+
+But, **the speed of spawning devils** is way too slow. I need to do something about this.
+
+## Speed up Spawning Devils
+
+Since I don't know where the devils are spawned, I start debugging from the beginning of function `sub_403890`.
+
+Surprisingly, at the call shown in the picture below, it jumps straight into the `rand()` function!
+
+![rand-function](/image/prng-game-hacking/rand-function.png)
+
+Here's what it looks like in **x32dbg** when I **step into** that call with **[F7]**.
+
+![rand-x32dbg](/image/prng-game-hacking/rand-x32dbg.png)
+
+I see that the return value from `rand()` is compared to the value `5`. If they are equal, execution branches somewhere else.
+
+So, I test it out by patching the binary to make it **always jump to the correct branch**. 
+
+![patch-spawn-devil](/image/prng-game-hacking/patch-spawn-devil.png)
+
+What I get is that **no devils are spawned**.
+
+<div style={{
+  display: 'flex',
+  justifyContent: 'center',
+  marginTop: '2rem'
+}}>
+  <video
+    controls
+    width="920"
+    height="240"
+    style={{
+      borderRadius: '12px',
+      boxShadow: '0 4px 12px rgba(0, 0, 0, 0.1)'
+    }}
+    src="/image/prng-game-hacking/no-devil-spawn.mp4"
+    type="video/mp4"
+  >
+    Your browser does not support the video tag.
+  </video>
+</div>
+
+This must be the **devil-spawning logic**!
+
+If forcing the **correct branch** spawns no devils, then what happens if I force the **false branch** instead?
+
+![patch-false-branch](/image/prng-game-hacking/patch-false-branch.png)
+
+Haha, devils are spawning everywhere.
+
+<div style={{
+  display: 'flex',
+  justifyContent: 'center',
+  marginTop: '2rem'
+}}>
+  <video
+    controls
+    width="920"
+    height="240"
+    style={{
+      borderRadius: '12px',
+      boxShadow: '0 4px 12px rgba(0, 0, 0, 0.1)'
+    }}
+    src="/image/prng-game-hacking/spawn-devil.mp4"
+    type="video/mp4"
+  >
+    Your browser does not support the video tag.
+  </video>
+</div>
+
+I combine this trick with my **Auto-Kill Mechanism**, and the score increases like crazy.
+
+<div style={{
+  display: 'flex',
+  justifyContent: 'center',
+  marginTop: '2rem'
+}}>
+  <video
+    controls
+    width="920"
+    height="240"
+    style={{
+      borderRadius: '12px',
+      boxShadow: '0 4px 12px rgba(0, 0, 0, 0.1)'
+    }}
+    src="/image/prng-game-hacking/score-sky-rocket.mp4"
+    type="video/mp4"
+  >
+    Your browser does not support the video tag.
+  </video>
+</div>
+
+## Problems
+
+After a while, I finally get **Flag1** to appear on the screen.
+
+![print-flag1](/image/prng-game-hacking/print-flag1.png)
+
+But when I run the game again, the **second Flag1** is completely different from the first.
+
+![second-flag1](/image/prng-game-hacking/second-flag1.png)
+
+Also, **the printed characters** aren't even readable.
+
+As for **Flag2**, the score needs to be `0x31159CD`. It is a huge number! Based on my testing, it takes about **1 minute** just to reach a score of `1000`. That means I have to wait roughly **2 months** straight before **Flag2** shows up. 
+
+Well... there has to be a better way.
+
+## Analyze Spawning Devils
+
+Now, I focus on the **false branch**, where the devils actually spawn.
+
+Here, the game compares the value in `[edi+53Ch]` with `0x1D`.
+
+![compare](/image/prng-game-hacking/compare.png)
+
+The decimal value of `0x1D` is `29`, and `[edi+53Ch]` starts from `0`. Since the total number of devils that can spawn at a time is `30`, this makes more sense now.
+
+![total-devil](/image/prng-game-hacking/total-devil.png)
+
+From that, I can easily deduce `[edi+53Ch]` is the **spawn index**, and `[edi+eax*4+4C4h]` is likely **an array of size** `0x1E`. If the value at `[edi+eax*4+4C4h]` for the current spawn index is `0`, a devil spawns. If it's non-zero, no devil spawns at that index.
+
+When a devil does spawn, the slot is immediately marked as occupied by setting the value to `1`.
+
+![slot-occupied](/image/prng-game-hacking/slot-occupied.png)
+
+I want to see exactly what happens in memory when a devil spawns. At game start, devils appear instantly, but it takes me a moment to attach its **PID** to **x32dbg**. Honestly, I want debugging to start as soon as the game launches.
+
+Because the game is a **UWP app** (also called a **Metro-style app** or **Windows Store app**), it uses **PLM (Process Lifetime Management)**. When the app closes, **PLM** suspends it to save memory, or terminates it if resources are needed. This makes attaching a debugger tricky.
+
+Luckily, there's a command-line tool called `plmdebug.exe` that can **disable PLM** for a debugging session.
+
+With the following command, I can launch the game directly into `x32dbg` when it starts.
+
+```ps 
+PS C:\Program Files (x86)\Windows Kits\10\Debuggers\x86> .\plmdebug.exe /enableDebug Microsoft.Adventure.CPP_1.0.0.0_x86__8wekyb3d8bbwe "D:\Apps\xdbg\release\x32\x32dbg.exe"
+Package full name is Microsoft.Adventure.CPP_1.0.0.0_x86__8wekyb3d8bbwe.
+Enable debug mode
+SUCCEEDED
+
+PS C:\Program Files (x86)\Windows Kits\10\Debuggers\x86> .\plmdebug.exe /disableDebug Microsoft.Adventure.CPP_1.0.0.0_x86__8wekyb3d8bbwe
+Package full name is Microsoft.Adventure.CPP_1.0.0.0_x86__8wekyb3d8bbwe.
+Disable debug mode
+SUCCEEDED
+```
+
+Once I enable **PLM debugging**, the debugger pops up immediately when I start the game. I patch the code so it spawns all 30 devils at once.
+
+For the first spawned devil, **the spawn index** `[edi+53C]` is `0`, so `[edi+eax*4+4C4]` points to the memory location that tracks whether the first devil is present. After it spawns, this address is set to `1`.
+
+![first-devil-addr](/image/prng-game-hacking/first-devil-addr.png)
+
+Here's the memory view after the first devil spawns, **the spawn index** increases from `0` to `1`, and **the first slot** is set to `1`.
+
+![first-devil-memory](/image/prng-game-hacking/first-devil-memory.png)
+
+This is the memory state when all **30 devils are spawned**.
+
+![30-devil-memory](/image/prng-game-hacking/30-devil-memory.png)
+
+I also notice that each time a devil spawns, it gets **4 specific values** assigned to it, each coming from a separate call to `rand()`.
+
+![4-rand](/image/prng-game-hacking/4-rand.png)
+
+These values are stored in **4 arrays** (each of size `0x1E`), with each array holding the return value from each `rand()` function respectively at the corresponding index.
+
+To track where the `rand()` return values are stored, I can calculate the exact address of each element in these **4 arrays**.
+
+![first-rand](/image/prng-game-hacking/first-rand.png)
+
+![second-rand](/image/prng-game-hacking/second-rand.png)
+
+![third-rand](/image/prng-game-hacking/third-rand.png)
+
+![fourth-rand](/image/prng-game-hacking/fourth-rand.png)
+
+## XOR Encryption
+
+It's time to break down how the flag is crafted.
+
+This is where **Flag1** is assembled. Before it appears, it is **XOR**ed with eight hexadecimal values, and the result is stored between `[edi+90]` and `[edi+AC]`. From this, I deduce that `[edi+90]` holds the flag.
+
+![flag1-x32dbg](/image/prng-game-hacking/flag1-x32dbg.png)
+
+Initially, the flag's memory space contains all zeros.
+
+![flag-memory](/image/prng-game-hacking/flag-memo.png)
+
+But those are the final steps for **Flag1** when the score reaches `0xDDB`. Before that, there are two earlier **XOR** instructions that also modify the flag's memory region.
+
+![xor-flag](/image/prng-game-hacking/xor-flag.png)
+
+![affect-flag-1](/image/prng-game-hacking/affect-flag-1.png)
+
+![affect-flag-2](/image/prng-game-hacking/affect-flag-2.png)
+
+What surprises me here is that `eax` is loaded from **one of the second `rand()` function store addresses** (`0x0a1c`), while `ecx` is loaded from **one of the third `rand()` function store addresses** (`0x0bc`).
+
+![second-rand](/image/prng-game-hacking/second-rand.png)
+
+![third-rand](/image/prng-game-hacking/third-rand.png)
+
+This trick sounds pretty evil... who would think a random number could be used to build something as specific as a flag? But it works, because `rand()` isn't actually random. If you give it the same seed with `srand()` (instead of something like the current time), it will prints the exact same sequence every single run.
+
+Luckily for me, the game uses **a fixed deterministic seed** `0x64`.
+
+![seed](/image/prng-game-hacking/seed.png)
+
+This also explains why I get **two different Flag1 results**. Normally, when `rand()` returns `5`, the game spawns a devil. But after I patch the game to make it **auto-spawn**, I mess up the program's flow and overwrite the values in the **4 arrays** filled by **4 `rand()` calls**.
+
+Now things are clear. The seed `0x64` controls devil spawns through `rand()` calls. When a devil spawns, it always gets **four fixed return values** from `rand()`. I can recreate this easily by running the same `rand()` calls in a loop, like this:
+
+```c 
+/*
+    This program is used to test the seed of PRNG (Pseudo-Random Number Generator)
+*/
+
+#include <stdio.h>
+#include <stdlib.h>
+
+unsigned int myRand(unsigned int a, unsigned int b) {
+    return a + rand() % (b - a + 1);
+}
+
+int main() {
+    srand(0x64);
+
+    int monster_count = 0;
+    for(int i = 0; i < 1000; ++i) {
+        unsigned int res = myRand(1, 0x32);
+        if(res == 5) {
+            printf("\nMonster %d spawn\n", monster_count++);
+            printf("\nFirst rand: 0x%04X", myRand(0, 0x414));
+            printf("\nSecond rand: 0x%04X", myRand(1, 2));
+            printf("\nThird rand: 0x%04X", myRand(1, 4));
+            printf("\nFourth rand: 0x%04X", myRand(4, 0xA));
+            printf("\n");
+        }
+    }
+        
+    return 0;
+}
+```
+
+Here is partly the output.
+
+![simulate-monster-spawn](/image/prng-game-hacking/simulate-monster-spawn.png)
+
+Then I just check if the simulated `rand()` values match what I see in `eax` and `ecx` when I kill the first devil.
+
+![test-eax-ecx](/image/prng-game-hacking/test-eax-ecx.png)
+
+Haha, it is the same. `eax` register holds value `0x1`, which is from the **second `rand()`** and `ecx` register holds value `0x3`, which is from the **third `rand()`**.
+
+After the **XOR Encryption**, this is how the flag's memory region looks.
+
+![after-xor](/image/prng-game-hacking/after-xor.png)
+
+## ROL Encryption
+
+After hours of debugging and debugging... I figure out the flag is also affected here.
+
+![affect-flag](/image/prng-game-hacking/affect-flag.png)
+
+![rol-x32dbg](/image/prng-game-hacking/rol-x32dbg.png)
+
+In this part, there are **two calls** to the **ROL Encryption** function. The arguments passed to these calls come from the **third `rand()`** and **fourth `rand()`** results.
+
+In the first call, `eax` is loaded from `[esi]`, which comes from the **third `rand()`**, and the argument `[edi+eax*8+88]` points to the flag's memory region. Keep in mind, this memory has already been changed by the **XOR Encryption** step.
+
+![esi](/image/prng-game-hacking/esi.png)
+
+![third-rand](/image/prng-game-hacking/third-rand.png)
+
+![flag-memory-1](/image/prng-game-hacking/flag-memory-1.png)
+
+This is the flag's memory region after the first call.
+
+![after-first-call](/image/prng-game-hacking/after-first-call.png)
+
+The second call works the same way. Here, `eax` is loaded from `[esi+4]` (value from **the fourth `rand()`**), and the argument `[edi+eax*8+8C]` also points to the flag's memory.
+
+![second-call-arg3](/image/prng-game-hacking/second-call-arg3.png)
+
+![fourth-rand](/image/prng-game-hacking/fourth-rand.png)
+
+![second-call-arg2](/image/prng-game-hacking/second-call-arg2.png)
+
+After this call, the flag's memory changes again.
+
+![after-second-call](/image/prng-game-hacking/after-second-call.png)
+
+Before the score reaches `0xDDB`, the flag goes through both **XOR Encryption** and **ROL Encryption**. Since the seed `0x64` is **deterministic**, the results from the **four `rand()` calls** are always the same, and I've already confirmed this in the **XOR Encryption** section.
+
+I write a quick simulation to check if the flag's memory after **XOR Encryption** and **ROL Encryption** matches what I see in **x32dbg**.
+
+```c 
+/*
+    This program is used to test flag's memory after XOR Encryption and ROL Encryption
+*/
+
+#include <stdio.h>
+#include <stdlib.h>
+
+unsigned int myRand(unsigned int a, unsigned int b) {
+    return a + rand() % (b - a + 1);
+}
+
+unsigned int myRol(unsigned int a, unsigned int n) {
+    return ((a << n) | (a >> (32 - n)));
+}
+
+int main() {
+    srand(0x64);
+
+    unsigned int flag[8] = {0};
+
+    while(1) {
+        // if myRand() is 5 => create devils
+        if(myRand(1, 0x32) == 5) {
+            // when a devil is created, it has its own 4 values from rand() function
+            int a = myRand(0, 0x414);
+            int b = myRand(1, 2);
+            int c = myRand(1, 4);
+            int d = myRand(4, 0xA);
+
+            // XOR Encryption
+            flag[c * 2 - 2] ^= b;
+            flag[c * 2 - 1] ^= b;
+
+            // ROL Encryption
+            flag[c * 2 - 2] = myRol(flag[c * 2 - 2], c);
+            flag[c * 2 - 1] = myRol(flag[c * 2 - 1], d);
+
+            break;
+        }
+    }
+
+    for(int i = 0; i < 8; ++i) {
+        if(i == 4)
+            printf("\n");
+        printf("0x%02X ", flag[i]);
+    }
+
+    return 0;
+}
+```
+
+Haha, the result is exactly same to what is shown in **x32dbg**!
+
+![test2-output](/image/prng-game-hacking/test2-output.png)
+
+## Conclusion 
+
+After a long journey, I finally come here :D 
+
+Here's the overall flow of how the game works:
+
+1. The game seeds `rand()` with `0x64`. If a call to `rand()` returns `5`, it triggers the spawn of a devil.
+
+2. It then checks the **spawn index** to see if it's already occupied. If not, a devil is spawned.
+
+3. Each newly spawned devil gets **4 different values** from **4 separate `rand()` calls**.
+
+4. If a bullet hits that devil, the game applies **XOR Encryption** to the flag's memory.
+
+5. When the score reaches `0xDDB` or `0x31159CD`, it performs the **final 8 encryption steps** before revealing **Flag1** or **Flag2**, respectively.
+
+6. The game then applies **ROL Encryption** to the flag's memory
+
+7. Finally, the devil is killed, the score is updated, and the whole loop repeats until the score check is triggered.
+
+Haha, what a great journey it has been...
