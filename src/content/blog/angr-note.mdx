@@ -20,7 +20,7 @@ import Warning from "../../components/mdx/Warning.astro";
 import TimeLine from "../../components/mdx/TimeLine.astro";
 import LinkCard from "../../components/mdx/LinkCard.astro";
 
-Today post is all about the challenges in my repo **"angr-note"**. I've written down my thought process and explained things step by step, so it's easier to understand how I solved each one. Hope it helps you get more comfortable with **angr** :D
+Today post is all about some challenges in my repo **"angr-note"**. I've written down my thought process and explained things step by step, so it's easier to understand how I solved each one. Hope it helps you get more comfortable with **angr** :D
 
 Below is the link to my **"angr-note"** Github Repo for installation, sources and solutions.
 
@@ -943,7 +943,7 @@ if __name__=="__main__":
 
 After loading the binary `03_angr_symbolic_registers` into IDA, there is a call to `get_user_input` where we have to enter 3 inputs.
 
-![03-pseudo-code-main-1.png]
+![03-pseudo-code-main-1](/image/angr-note/03-pseudo-code-main-1.png)
 
 Looking closely at `get_user_input`, our inputs are stored in `ebp+var_10`, `ebp+var_14`, and `ebp+var_18`. Then, those three values are loaded into three registers `edx`, `ebx`, and `eax` respectively.
 
@@ -2186,7 +2186,7 @@ Finally, the encoded input is passed into `check_equals_ORSDDWXHZURJRBDH` to che
 
 ![10-main-5](/image/angr-note/10-main-5.png)
 
-At this moment, we know that we can hook `check_equals_ORSDDWXHZURJRBDH` and read input from `stdin` to get flag. However, in this challenge, we play around with a new technique, which is called **SimProcedure**. Like the name suggests, this creates a **symbolic function** for an **actual function** in our program. This is initially **used for hooking functions from libraries** like `strcmp`, `malloc`, ..., but we can use this to **any functions**, even one in our target program. By using a **SimProcedure**, we *8replace the actual function with a symbolic version that we control**. When angr sees that function call, it will **run our version instead**.
+At this moment, we know that we can hook `check_equals_ORSDDWXHZURJRBDH` and read input from `stdin` to get flag. However, in this challenge, we play around with a new technique, which is called **SimProcedure**. Like the name suggests, this creates a **symbolic function** for an **actual function** in our program. This is initially **used for hooking functions from libraries** like `strcmp`, `malloc`, ..., but we can use this to **any functions**, even one in our target program. By using a **SimProcedure**, we **replace the actual function with a symbolic version that we control**. When angr sees that function call, it will **run our version instead**.
 
 **You can read further information from the links below:**
 1. <a href="https://docs.angr.io/en/latest/extending-angr/simprocedures.html#quick-start" target="_blank">https://docs.angr.io/en/latest/extending-angr/simprocedures.html#quick-start</a>
