@@ -63,7 +63,7 @@ site:
 
 # 用户的个人信息
 user:
-  name: dathwang # 用户名
+  name: Hwangstice # 用户名
   site: "https://hwangstice.github.io/" # 用户的网站链接
   avatar: /idk_man.jpg # 用户头像路径
   sidebar: # 侧边栏配置
