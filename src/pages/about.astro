@@ -66,30 +66,50 @@ import GitHubStats from "@/components/mdx/GitHubStats.astro";
         </div>
       </section>
 
-      <!-- Honors (Solo) -->
+      {/* Honors (Solo) - Replaced Section */}
       <section>
-        <h2 class="text-2xl font-bold mb-4 flex items-center gap-2">
-          <Icon name="lucide:award" class="w-5 h-5" />
-          Honors (Solo)
+        <h2 class="text-2xl font-bold mb-6 flex items-center gap-2">
+          <Icon name="lucide:award" class="w-6 h-6 text-primary" />
+          Solo
         </h2>
-        <ul class="list-disc list-inside text-base-content/80 space-y-2">
-          <li><b><a href="http://reversing.kr/" target="_blank">Reversing.Kr</a></b> - Finisher #54</li>
-          <li><b><a href="https://overthewire.org/wargames/" target="_blank">OverTheWire</a></b> - Bandit, Leviathan</li>
-          <li><b><a href="https://exploit.education/" target="_blank">Exploit Education</a></b> - Protostar</li>
-        </ul>
+        {/* Grid layout: 1 column on small screens, 2 on medium, 3 on large */}
+        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+          <div class="p-5 rounded-xl border border-base-300 hover:border-primary hover:shadow-lg transition-all duration-300">
+            <a href="http://reversing.kr/" target="_blank" class="font-bold text-lg hover:underline">
+              Reversing.Kr
+            </a>
+            <p class="text-sm text-base-content/70 mt-1">Finisher #54</p>
+          </div>
+      
+          <div class="p-5 rounded-xl border border-base-300 hover:border-primary hover:shadow-lg transition-all duration-300">
+            <a href="https://overthewire.org/wargames/" target="_blank" class="font-bold text-lg hover:underline">
+              OverTheWire
+            </a>
+            <p class="text-sm text-base-content/70 mt-1">Bandit, Leviathan</p>
+          </div>
+      
+          <div class="p-5 rounded-xl border border-base-300 hover:border-primary hover:shadow-lg transition-all duration-300">
+            <a href="https://exploit.education/" target="_blank" class="font-bold text-lg hover:underline">
+              Exploit Education
+            </a>
+            <p class="text-sm text-base-content/70 mt-1">Protostar</p>
+          </div>
+        </div>
       </section>
       
-      <!-- Education Section -->
-      <section>
-        <h2 class="text-2xl font-bold mb-4 flex items-center gap-2">
-          <Icon name="lucide:graduation-cap" class="w-5 h-5" />
+      {/* Education Section - Replaced Section */}
+      <section class="mt-10">
+        <h2 class="text-2xl font-bold mb-6 flex items-center gap-2">
+          <Icon name="lucide:graduation-cap" class="w-6 h-6 text-primary" />
           Education
         </h2>
-        <ul class="list-disc list-inside text-base-content/80 space-y-2">
-          <li><b><a href="https://www.uit.edu.vn/" target="_blank">VNUHCM - University of Information Technology</a></b> – Bachelor of Information Security (2023 – Present)</li>
-        </ul>
+        <div class="p-5 rounded-xl border border-base-300 hover:border-primary hover:shadow-lg transition-all duration-300">
+          <a href="https://www.uit.edu.vn/" target="_blank" class="font-bold text-lg hover:underline">
+            VNUHCM – University of Information Technology
+          </a>
+          <p class="text-sm text-base-content/70 mt-1">Bachelor of Information Security (2023 – Present)</p>
+        </div>
       </section>
-
     </div>
   </MainCard>
 </BaseLayout>
