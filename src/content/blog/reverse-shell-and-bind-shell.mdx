@@ -208,7 +208,7 @@ So, `aaaaaaaaaaaaaaaaaaaa.kadusus.local` become a suspicious **DNS record**.
 
 However, there is no TCP, HTTP, or any other indicators of any other network traffics in **Wireshark**. This sample only looks for the above DNS.
 
-Here, I have a solution to inspect this further. Instead of making the sample sends connection to DNS `aaaaaaaaaaaaaaaaaaaa.kadusus.local` via **INETSIM (REMnux)**, I make it establish connection to my host via **host files** (`cmder` needs to be opened with **administator**).
+Here, I have a solution to inspect this further. Instead of making the sample sends connection to DNS `aaaaaaaaaaaaaaaaaaaa.kadusus.local` via **INETSIM (REMnux)**, I make it establish connection to my host via **host files** (`cmder` needs to be opened with **administrator**).
 
 ![reverse-shell-edit-host](/image/reverse-shell-bind-shell/reverse-shell-edit-host.png)
 
@@ -230,7 +230,7 @@ At this point, the sample thinks its home server is my host, I can use `ncat` li
 
 ![reverse-shell-find-tcp](/image/reverse-shell-bind-shell/reverse-shell-find-tcp.png)
 
-When I throw the command `whoami`, I get **TCP Receive** and **TCP Connect**, also the output from the terminal.
+When I throw the command `whoami`, I get **TCP Receive** and **TCP Send**, also the output from the terminal.
 
 ![reverse-shell-whoami](/image/reverse-shell-bind-shell/reverse-shell-whoami.png)
 
