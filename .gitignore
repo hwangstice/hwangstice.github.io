@@ -26,7 +26,12 @@ pnpm-debug.log*
 # pagefind
 public/pagefind/
 
+
 # how to use mdx
 /src/content/blog/how-to-use-mdx.mdx
 
+/src/content/blog/reverse-shell-and-bind-shell.mdx
+
 /src/content/blog/reversing.kr.mdx
+
+
