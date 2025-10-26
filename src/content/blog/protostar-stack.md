@@ -10,7 +10,7 @@ tags:
   - Pwnable
 ---
 
-This blog marks a significant milestone (March 2, 2025) in my reversing journey since I'm completely new to this. Hopefully, it will help (or at least entertain) anyone who's into this kind of stuff too!
+This blog marks a significant milestone **(March 2, 2025)** in my hacking journey since I'm completely new to this. Hopefully, it will help (or at least entertain) anyone who's into this kind of stuff too!
 
 <a href="https://exploit.education/protostar/" target="_blank">Protostar</a> built a solid foundation for reverse engineering, covering everything from Stack Buffer Overflows and Format String Vulnerabilities to Heap Exploitation and more.
 
