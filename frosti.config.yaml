@@ -18,11 +18,11 @@ site:
       href: / # 菜单项链接的地址
       svg: "material-symbols:home-outline-rounded"
       target: _self
-    - id: about
-      text: About
-      href: /about
-      svg: "material-symbols:info-outline-rounded"
-      target: _self
+    # - id: about
+    #   text: About
+    #   href: /about
+    #   svg: "material-symbols:info-outline-rounded"
+    #   target: _self
     - id: blog
       text: Blogs
       href: /blog

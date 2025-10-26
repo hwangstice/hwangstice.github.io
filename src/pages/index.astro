@@ -8,27 +8,107 @@ import GitHubStats from "@/components/mdx/GitHubStats.astro";
 
 <BaseLayout title="Home">
   <MainCard
-    title="Home"
-    description="This space is where I share thoughts, experiments, and challenges in Reverse Engineering."
+    title="About"
+    description="I love rain"
     image="/home.webp"
-    infoIcon="lucide:info"
+    alt="about image"
+    infoIcon="lucide:user"
   >
-    <div class="space-y-8">
-      <!-- Hero Section -->
-      <section class="py-6">
-        <div class="flex flex-col items-center text-center ">
-          <h1 class="text-4xl font-bold mb-4 from-primary to-secondary">
-            ☃️ Hwangstice
-          </h1>
-          <p class="text-xl text-base-content/80 max-w-3xl mb-8">
-            Hey, welcome to my blog. I do Reverse Engineering and Malware Analysis, along with some personal insights and things I find interesting. If you're into that kind of thing, let's embark on this journey together. ❄️
-          </p>
-          <div class="flex flex-wrap gap-4 justify-center">
-            <a href="/blog" class="btn btn-outline gap-2">
-              <Icon name="lucide:book-open" class="w-5 h-5" />
-              <span>Explore Blog</span>
+    <div class="space-y-10 mb-8">
+      <!-- Profile Section -->
+      <section class="flex flex-col md:flex-row gap-8 items-center md:items-start">
+
+        <!-- Image for avatar -->
+
+        <!-- <div class="avatar"> -->
+          <!-- <div -->
+            <!-- class="w-32 h-32 md:w-40 md:h-40 rounded-xl ring ring-primary ring-offset-base-100 ring-offset-2 overflow-hidden"
+          > -->
+            <!-- <img src="/profile.webp" alt="dathwang" width="160" height="160" loading="eager" /> -->
+          <!-- </div> -->
+        <!-- </div> -->
+
+        <div class="flex-1 text-center md:text-left">
+          <h1 class="text-3xl md:text-4xl font-bold mb-2">Hwangstice</h1>
+          <p class="text-xl text-base-content/80 mb-4">On the Cloud</p>
+
+          <div class="flex flex-wrap gap-3 justify-center md:justify-start mb-6">
+            <a
+              href="https://github.com/hwangstice"
+              target="_blank"
+              rel="noopener noreferrer"
+              class="btn btn-sm btn-outline gap-2"
+            >
+              <Icon name="lucide:github" class="w-4 h-4" />
+              <span>GitHub</span>
+            </a>
+            <a
+              href="https://www.instagram.com/dat.hwang/"
+              target="_blank"
+              rel="noopener noreferrer"
+              class="btn btn-sm btn-outline gap-2"
+            >
+              <Icon name="lucide:instagram" class="w-4 h-4" />
+              <span>Instagram</span>
+            </a>
+            <a href="mailto:datquochoang0587@gmail.com" class="btn btn-sm btn-outline gap-2">
+              <Icon name="lucide:mail" class="w-4 h-4" />
+              <span>Email</span>
             </a>
           </div>
+
+          <p class="text-base-content/80">
+            Hello. I am Hoang Quoc Dat, aka Hwangstice. I do weird things with computer. I'm also a simple person who finds peace in running, just me and my thoughts.
+            </br>
+            </br>
+
+            Currently, I play CTFs with <a href="https://ctftime.org/team/373205" target="_blank" class="font-bold text-lg hover:underline">$cr1pt_K1dd13$</a>.
+          </p>
+        </div>
+      </section>
+
+      {/* Honors (Solo) - Replaced Section */}
+      <section>
+        <h2 class="text-2xl font-bold mb-6 flex items-center gap-2">
+          <Icon name="lucide:award" class="w-6 h-6 text-primary" />
+          Solo
+        </h2>
+        {/* Grid layout: 1 column on small screens, 2 on medium, 3 on large */}
+        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+          <div class="p-5 rounded-xl border border-base-300 hover:border-primary hover:shadow-lg transition-all duration-300">
+            <a href="http://reversing.kr/" target="_blank" class="font-bold text-lg hover:underline">
+              Reversing.Kr
+            </a>
+            <p class="text-sm text-base-content/70 mt-1">Finisher #54</p>
+          </div>
+
+          <div class="p-5 rounded-xl border border-base-300 hover:border-primary hover:shadow-lg transition-all duration-300">
+            <a href="https://overthewire.org/wargames/" target="_blank" class="font-bold text-lg hover:underline">
+              OverTheWire
+            </a>
+            <p class="text-sm text-base-content/70 mt-1">Bandit, Leviathan</p>
+          </div>
+
+          <div class="p-5 rounded-xl border border-base-300 hover:border-primary hover:shadow-lg transition-all duration-300">
+            <a href="https://exploit.education/" target="_blank" class="font-bold text-lg hover:underline">
+              Exploit Education
+            </a>
+            <p class="text-sm text-base-content/70 mt-1">Protostar</p>
+          </div>
+        </div>
+      </section>
+
+      {/* Education Section - Replaced Section */}
+      <section class="mt-10">
+        <h2 class="text-2xl font-bold mb-6 flex items-center gap-2">
+          <Icon name="lucide:graduation-cap" class="w-6 h-6 text-primary" />
+          Education
+        </h2>
+        <div class="p-5 rounded-xl border border-base-300 hover:border-primary hover:shadow-lg transition-all duration-300">
+          <a href="https://www.uit.edu.vn/" target="_blank" class="font-bold text-lg hover:underline">
+            VNUHCM – University of Information Technology
+          </a>
+          <p class="text-sm text-base-content/70 mt-1">Bachelor of Information Security (2023 – Present)</p>
         </div>
       </section>
     </div>
