@@ -828,7 +828,7 @@ t.interact()
 
 ![final2-win](public/image/protostar-final/final2.png)
 
-### Refereces
+### References
 
 - <a href="https://dathwang.github.io/blog/protostar-heap/#heading-11" target="_blank">Protostar Heap 3</a>
 - <a href="https://gist.github.com/dathwang/89a6b012828ed26f6cb2a7961908d333" target="_blank">Old school dlmalloc</a>

@@ -65,7 +65,7 @@ site:
 user:
   name: Hwangstice # 用户名
   site: "https://hwangstice.github.io/" # 用户的网站链接
-  avatar: /cool-uncle.jpg # 用户头像路径
+  avatar: /amazing.gif # 用户头像路径
   sidebar: # 侧边栏配置
     social:
       - href: "https://github.com/hwangstice"
@@ -80,6 +80,10 @@ user:
         ariaLabel: Discord
         title: Discord
         svg: "ri:discord-line"
+      - href: "https://x.com/dat_hwang"
+        ariaLabel: Twitter
+        title: Twitter
+        svg: "ri:twitter-line"
       # - href: "https://open.spotify.com/user/31iyzwvyasiucdi62k5nc56mthqa"
       #   ariaLabel: Spotify
       #   title: Spotify
@@ -98,6 +102,10 @@ user:
         ariaLabel: Discord
         title: Discord
         svg: "ri:discord-line"
+      - href: "https://x.com/dat_hwang"
+        ariaLabel: Twitter
+        title: Twitter
+        svg: "ri:twitter-line"
       # - href: "https://open.spotify.com/user/31iyzwvyasiucdi62k5nc56mthqa"
       #   ariaLabel: Spotify
       #   title: Spotify
