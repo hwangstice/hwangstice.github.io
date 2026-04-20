@@ -72,10 +72,10 @@ user:
         ariaLabel: Github
         title: Github
         svg: "ri:github-line"
-      - href: "https://www.instagram.com/dat.hwang/"
-        ariaLabel: Instagram
-        title: Instagram
-        svg: "ri:instagram-line"
+      # - href: "https://www.instagram.com/dat.hwang/"
+      #   ariaLabel: Instagram
+      #   title: Instagram
+      #   svg: "ri:instagram-line"
       - href: "http://discord.com/users/1144463114771898391"
         ariaLabel: Discord
         title: Discord
@@ -84,6 +84,10 @@ user:
         ariaLabel: Twitter
         title: Twitter
         svg: "ri:twitter-line"
+      - href: "https://www.linkedin.com/in/dat-quoc-hoang/"
+        ariaLabel: Linkedin
+        title: Linkedin
+        svg: "ri:linkedin-line"
       # - href: "https://open.spotify.com/user/31iyzwvyasiucdi62k5nc56mthqa"
       #   ariaLabel: Spotify
       #   title: Spotify
@@ -94,10 +98,10 @@ user:
         ariaLabel: Github
         title: Github
         svg: "ri:github-line"
-      - href: "https://www.instagram.com/dat.hwang/"
-        ariaLabel: Instagram
-        title: Instagram
-        svg: "ri:instagram-line"
+      # - href: "https://www.instagram.com/dat.hwang/"
+      #   ariaLabel: Instagram
+      #   title: Instagram
+      #   svg: "ri:instagram-line"
       - href: "http://discord.com/users/1144463114771898391"
         ariaLabel: Discord
         title: Discord
@@ -106,6 +110,10 @@ user:
         ariaLabel: Twitter
         title: Twitter
         svg: "ri:twitter-line"
+      - href: "https://www.linkedin.com/in/dat-quoc-hoang/"
+        ariaLabel: Linkedin
+        title: Linkedin
+        svg: "ri:linkedin-line"
       # - href: "https://open.spotify.com/user/31iyzwvyasiucdi62k5nc56mthqa"
       #   ariaLabel: Spotify
       #   title: Spotify
