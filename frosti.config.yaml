@@ -1,6 +1,6 @@
 # 网站的基本信息
 site:
-  tab: Dat Hwang # 浏览器标签栏上显示的文本
+  tab: Dat Ivor # 浏览器标签栏上显示的文本
   title: 食べて、寝て、Reverse、繰り返す # 网站的标题
   description: A personal blog focused on Reverse Engineering, Malware Analysis, and cybersecurity. # 网站的描述，用于SEO等
   language: en # 网站的语言，例如 "en" 是英文
@@ -57,7 +57,7 @@ site:
     #  target: _self
     - id: contact
       text: Contact
-      href: "mailto:datquochoang0587@gmail.com"
+      href: "mailto:hwangstice@gmail.com"
       target: _blank # 在新标签页打开
       svg: "material-symbols:attach-email-outline-rounded"
 
@@ -84,7 +84,7 @@ user:
         ariaLabel: Twitter
         title: Twitter
         svg: "ri:twitter-line"
-      - href: "https://www.linkedin.com/in/dat-quoc-hoang/"
+      - href: "https://www.linkedin.com/in/dat-ivor/"
         ariaLabel: Linkedin
         title: Linkedin
         svg: "ri:linkedin-line"
@@ -110,7 +110,7 @@ user:
         ariaLabel: Twitter
         title: Twitter
         svg: "ri:twitter-line"
-      - href: "https://www.linkedin.com/in/dat-quoc-hoang/"
+      - href: "https://www.linkedin.com/in/dat-ivor/"
         ariaLabel: Linkedin
         title: Linkedin
         svg: "ri:linkedin-line"
