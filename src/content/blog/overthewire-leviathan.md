@@ -2,7 +2,7 @@
 title: "OverTheWire - Leviathan"
 description: "Writeup for OverTheWire Leviathan"
 pubDate: "April 12 2025"
-image: /image/blog-cover/leviathan.jpg
+image: /image/blog-cover/rain.gif
 categories:
   - tech
 tags:
