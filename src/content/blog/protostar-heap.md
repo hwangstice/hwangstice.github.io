@@ -781,7 +781,7 @@ The source code is simple and easy to follow. There are two functions: `main` an
 
 ### Understanding dlmalloc
 
-This type of vulnerability is linked to ***Doug Lea's malloc (dlmalloc)***, an old memory allocator. I’m working with <a href="https://gist.github.com/dathwang/89a6b012828ed26f6cb2a7961908d333" target="_blank">a version from 2001</a>, which means it contains some well-known weaknesses.
+This type of vulnerability is linked to ***Doug Lea's malloc (dlmalloc)***, an old memory allocator. I’m working with <a href="https://gist.github.com/hwangstice/89a6b012828ed26f6cb2a7961908d333" target="_blank">a version from 2001</a>, which means it contains some well-known weaknesses.
 
 Before diving deeper, it's helpful to refer to an article from Phrack titled <a href="https://phrack.org/issues/57/9#article" target="_blank">"Once upon a free()"</a>, which explains the heap structure in a general way:
 
@@ -1229,4 +1229,4 @@ Nice :>
 ### References
 
 - <a href="https://phrack.org/issues/57/9#article" target="_blank">"Once upon a free()"</a>
-- <a href="https://gist.github.com/d7rub1k/89a6b012828ed26f6cb2a7961908d333" target="_blank">dlmalloc - version from 2001</a>
+- <a href="https://gist.github.com/hwangstice/89a6b012828ed26f6cb2a7961908d333" target="_blank">dlmalloc - version from 2001</a>

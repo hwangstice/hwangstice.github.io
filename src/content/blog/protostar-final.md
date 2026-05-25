@@ -831,5 +831,5 @@ t.interact()
 ### References
 
 - <a href="https://dathwang.github.io/blog/protostar-heap/#heading-11" target="_blank">Protostar Heap 3</a>
-- <a href="https://gist.github.com/dathwang/89a6b012828ed26f6cb2a7961908d333" target="_blank">Old school dlmalloc</a>
+- <a href="https://gist.github.com/hwangstice/89a6b012828ed26f6cb2a7961908d333" target="_blank">Old school dlmalloc</a>
 - <a href="https://shell-storm.org/shellcode/files/shellcode-575.html" target="_blank">Linux/x86 - execve /bin/sh - 21 bytes</a>
