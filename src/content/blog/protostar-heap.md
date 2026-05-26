@@ -2,7 +2,7 @@
 title: "Protostar - Heap"
 description: "Writeup for Protostar Heap"
 pubDate: "March 19 2025"
-image: /image/blog-cover/heap.gif
+image: /image/blog-cover/protostar-heap.jpg
 categories:
   - tech
 tags:
