@@ -28,13 +28,13 @@ import remarkMath from 'remark-math'
 
 ## TL;DR
 
-In this article, I will present my analysis of an RTF file and show how **`CVE-2017-11882`** exploits a vulnerability in **Equation Editor** to execute malicious payloads.
+In this article, I present my analysis of an RTF file and explain how **`CVE-2017-11882`** exploits a vulnerability in **Equation Editor** to execute malicious payloads.
 
-One key thing to note is that this exploit is quite old, roughly 10 years old at this point, so you will need to download a suitable version of Microsoft Office. But don't worry, this blog will walk you through the setup steps.
+This exploit is quite old (roughly 10 years at this point), so you'll need a compatible version of Microsoft Office. But don't worry, this blog will walk you through the setup steps.
 
-I will also dive a little into how the shellcode is stored inside the RTF file format. Some of you may want to understand the shellcode structure used in this type of file. Trust me, it will hurt your brain a lot. That said, I won't go too deep into that topic since it is outside the scope of this blog.
+I also briefly explain how shellcode is stored inside the RTF format. Some of you may want to understand the shellcode structure used in this type of file. Trust me, it will hurt your brain a lot. That said, I won't go too deep into that topic since it is outside the scope of this blog. 
 
-The main goal of this article is to focus on the exploitation technique used by the malware and the methods I use to analyze the vulnerability and uncover what is happening behind the scenes.
+The main goal of this article is to focus on the exploitation technique and the analysis methods I use to uncover what is happening behind the scenes.
 
 Here is the link to the sample:
 
@@ -48,11 +48,11 @@ Cheers, and have fun!
 
 ## RTF File Specification
 
-To better understand the RTF file format, I highly recommend reading the following documentation.
+To better understand the RTF file format, I recommend reading the following documentation.
 
 &#x2192; <a href="https://www.biblioscape.com/rtf15_spec.htm" target="_blank">Rich Text Format (RTF) Version 1.5 Specification</a>
 
-Here, I write a simple RTF file called `example.rtf`, which displays the text **“Hwangstice - On the Cloud.”**
+Here, I write a simple RTF file called `example.rtf`, displaying the text **“Hwangstice - On the Cloud.”**
 
 ![image.png](/image/rtf-document/image.png)
 
@@ -62,11 +62,11 @@ This is the code behind the scenes.
 {\rtf1\ansi\deff0 {\fonttbl {\f0 Courier;}}{\colortbl;\red0\green0\blue0;\red255\green0\blue0;\red0\green255\blue0;\red0\green0\blue255;}\cf2 \b \qc \fs32 Hwangstice \cf0 \b - \cf4 \b On the Cloud.\line}
 ```
 
-The logic of RTF is pretty straightforward. An RTF document is enclosed within a pair of curly braces `{}` that define the root group of the document. It begins with the control word `\rtf1`, which identifies the file as an RTF document, followed by a series of other control words such as `\ansi`, `\deff0`, and many more.
+The logic of RTF is pretty straightforward. An RTF document is enclosed within a pair of curly braces `{}` that define the document's root group. It starts with the control word `\rtf1`, which identifies the file as an RTF document, followed by other control words such as `\ansi`, `\deff0`, and many more.
 
 At this point, you might be wondering what a control word is. To be simple, a control word is like a **"command"** that tells the RTF reader how to format or interpret the document. Every control word starts with a backslash (`\`) and may optionally contain a numeric parameter.
 
-Control words can be organized into groups using curly braces `{}`. For example, the `\fonttbl` and `\colortbl` control words shown above define the font table and color table used by the document.
+Control words can also be grouped using curly braces `{}`. For example, `\fonttbl` and `\colortbl` define the font table and color table used by the document.
 
 A control word ends when the parser encounters a non-alphabetic character, such as a space, a backslash (`\`) that starts another control word, or a brace (`{`). If a space is used to terminate a control word, that space is usually consumed by the parser and does not appear in the final document.
 
@@ -76,9 +76,9 @@ To include a literal backslash character in the document text, use `\\`.
 
 Yes, this is the key question you should ask yourself when analyzing an RTF file.
 
-RTF files are well known for supporting embedded objects through the control word `\object`. This is typically where the shellcode or exploit-related data is stored within the document.
+RTF files are well known for supporting embedded objects through the control word `\object`. This is typically where the shellcode is stored within the document.
 
-According to the <a href="https://www.biblioscape.com/rtf15_spec.htm" target="_blank">RTF file documentation</a>, this is the structure you will usually encounter when viewing the raw contents of an RTF file.
+According to the <a href="https://www.biblioscape.com/rtf15_spec.htm" target="_blank">RTF file documentation</a>, this is the structure you will encounter when viewing the raw contents of an RTF file.
 
 ![](/image/rtf-document/image%201.png)
 
@@ -101,17 +101,17 @@ Here, I will use the Proof of Concept (PoC) of **`CVE-2017-11882`** from <a href
   <em>Source: <a href="https://github.com/embedi/CVE-2017-11882/blob/master/example/exploit.rtf" target="_blank">PoC - exploit.rtf</a></em>
 </p>
 
-In the image above, the data part is highlighted by the red rectangle, while the result part is highlighted by the green rectangle. For now, let's focus on the data part.
+In the image above, the data part is highlighted in red, while the result part is highlighted in green. For now, let's focus on the data part.
 
-The fields of interest here are `\objemb`, `\objupdate`, and `\objdata`.
+The fields of interest are `\objemb`, `\objupdate`, and `\objdata`.
 
-- `\objemb` indicates that an OLE object is embedded within the document.
-- `\objupdate` forces the application to update the object before displaying it.
-- `\objdata` contains a hexadecimal blob in little-endian format that stores the object's data.
+- `\objemb` indicates an embedded OLE object.
+- `\objupdate` forces the object to be updated before displaying.
+- `\objdata` contains a little-endian hexadecimal blob storing the object's data.
 
-Normally, when you encounter a blob of hexadecimal data, it must follow a specific format, right?
+Normally, a hexadecimal blob follows a specific format, right?
 
-This example is not an exception. Here, the object data is stored in the **OleSaveToStream** format. This format begins with an <a href="https://learn.microsoft.com/en-us/openspecs/windows_protocols/ms-oleds/3c695db0-943f-48a0-b134-939af3b3a4ca?redirectedfrom=MSDN" target="_blank">ObjectHeader</a>, as shown below.
+This example is not an exception. The object data is stored in the **OleSaveToStream** format, which starts with an <a href="https://learn.microsoft.com/en-us/openspecs/windows_protocols/ms-oleds/3c695db0-943f-48a0-b134-939af3b3a4ca?redirectedfrom=MSDN" target="_blank">ObjectHeader</a>, as shown below.
 
 ![](/image/rtf-document/70c22477-9eca-4104-8ab1-a64c9f16aa82.png)
 
@@ -119,33 +119,33 @@ This example is not an exception. Here, the object data is stored in the **OleSa
   <em>Source: <a href="https://learn.microsoft.com/en-us/openspecs/windows_protocols/ms-oleds/3c695db0-943f-48a0-b134-939af3b3a4ca?redirectedfrom=MSDN" target="_blank">[MS-OLEDS]: ObjectHeader</a></em>
 </p>
 
-The first four bytes represent the **OLEVersion**, which is described in the specification as **"set to any arbitrary value and MUST be ignored on receipt"**. Therefore, we can safely ignore these bytes.
+The first four bytes represent the **OLEVersion**, which the specification describes as **"set to any arbitrary value and MUST be ignored on receipt"**. Therefore, we can safely ignore them.
 
-The next four bytes represent the **FormatID**. According to the specification, a value of `0x00000001` indicates a **LinkedObject** structure, while a value of `0x00000002` indicates an **EmbeddedObject** structure. As shown in the following image, our **FormatID** is set to `0x00000002`, telling us that the data contains an **EmbeddedObject** structure.
+The next four bytes represent the **FormatID**. According to the specification, a value of `0x00000001` indicates a **LinkedObject** structure, while a value of `0x00000002` indicates an **EmbeddedObject** structure. As shown below, our **FormatID** is set to `0x00000002`, indicating that the data contains an **EmbeddedObject** structure.
 
 ![image.png](/image/rtf-document/c021f6a8-4b76-4502-949f-4db9aac3f935.png)
 
-The next field is the **ClassName**, which is represented as a <a href="https://msdn.microsoft.com/en-us/library/dd942554.aspx" target="_blank">LengthPrefixedAnsiString</a>. In our case, the first four bytes represent the length of the string, which is `11` (`0x0B` in hexadecimal). The class name is `Equation.3` (including the null terminator byte `0x00`), which specifies the usage of **Equation Editor**.
+The next field is the **ClassName**, represented as a <a href="https://msdn.microsoft.com/en-us/library/dd942554.aspx" target="_blank">LengthPrefixedAnsiString</a>. In our case, the first four bytes represent the length of the string, which is `11` (`0x0B` in hexadecimal). The class name is `Equation.3` (including the null terminator byte `0x00`), specifying the usage of **Equation Editor**.
 
 ![image.png](/image/rtf-document/image%203.png)
 
-Following the **ClassName** are the **TopicName** and **ItemName** fields. Both fields are also stored as **LengthPrefixedAnsiString** values. Since the first four bytes of each field are `0x00000000`, both strings have a length of zero. This is Microsoft's way of indicating that these string fields are empty and contain no value.
+Following the **ClassName** are the **TopicName** and **ItemName** fields. Both are stored as **LengthPrefixedAnsiString** values. Since the first four bytes of each field are `0x00000000`, both strings have a length of zero. This is Microsoft's way of indicating that these string fields are empty.
 
 ![image.png](/image/rtf-document/image%204.png)
 
-Since the **FormatID** decoded above indicates that we are dealing with an **EmbeddedObject**, the remaining bytes (shown below) must be decoded according to Microsoft's <a href="https://msdn.microsoft.com/en-us/library/dd942053.aspx" target="_blank">EmbeddedObject</a> specification. Note that the data blob extends much further than what is shown in the image below, the screenshot only captures a small portion of it.
+Since the **FormatID** indicates that we are dealing with an **EmbeddedObject**, the remaining bytes (shown below) must be decoded according to Microsoft's <a href="https://msdn.microsoft.com/en-us/library/dd942053.aspx" target="_blank">EmbeddedObject</a> specification. Note that the screenshot below only captures a small portion of the data blob.
 
 ![image.png](/image/rtf-document/image%205.png)
 
-According to the **EmbeddedObject** specification, the first four bytes represent the **NativeDataSize** field. In our case, the value is `0x00000C00`, indicating the size of the **NativeData** field in bytes.
+According to the **EmbeddedObject** specification, the first four bytes represent the **NativeDataSize** field. In our case, the value is `0x00000C00`, indicating the size of **NativeData** field in bytes.
 
 ![image.png](/image/rtf-document/image%206.png)
 
-Parsing the **NativeData** field, we can see that it begins with the **“file signature value”** `0xD0CF11E0A1B11AE1`.   
+Parsing the **NativeData** field, we can see that it begins with the **"file signature value"** `0xD0CF11E0A1B11AE1`.   
 
 ![image.png](/image/rtf-document/image%207.png)
 
-This **“file signature value”** identifies the data as a <a href="https://learn.microsoft.com/en-us/openspecs/windows_protocols/ms-cfb/53989ce4-7b05-4f8d-829b-d08d6148375b" target="_blank">Compound File Binary Format (CFBF)</a> file.
+This **"file signature value"** identifies the data as a <a href="https://learn.microsoft.com/en-us/openspecs/windows_protocols/ms-cfb/53989ce4-7b05-4f8d-829b-d08d6148375b" target="_blank">Compound File Binary Format (CFBF)</a> file.
 
 ![](/image/rtf-document/image%208.png)
 
@@ -157,11 +157,11 @@ If we continue parsing the **NativeData** field, we eventually find the command 
 
 ![image.png](/image/rtf-document/image%209.png)
 
-Again, I won’t dive too DEEP into how **Compound File Binary Format** works or its internal structures.
+Again, I won't dive too DEEP into how **Compound File Binary Format** works or its internal structures.
 
 However, this should give you a clear picture of what is happening. The RTF document contains an embedded **OLE** **Object** (from the `\objemb` control word). By parsing the **ObjectHeader** stored in the `\objdata` control word, we can determine that we are dealing with an `Equation.3` **EmbeddedObject**. As we continue parsing the **EmbeddedObject**, we discover a file signature indicating that it contains a **Compound File Binary Format (CFBF)** file, which contains the malicious payload that gets executed once the vulnerability in **Equation Editor** is successfully exploited.
 
-At this point, you might be wondering why I am not explaining the **Compound File Binary Format** in detail. The answer is simple, it is a complex file format, and covering its internal structures is outside the scope of this blog. Doing so would take us too far away from the main goal, which is understanding how the exploit works.
+At this point, you might be wondering why I am not explaining the **Compound File Binary Format** in detail. The answer is simple, it is a complex file format, and diving into its internals is outside the scope of this blog. The main goal here is to understand how the exploit works.
 
 But don't worry. Instead of diving into every detail of the **CFBF** format, I will show you a much more familiar example, which is embedding an Excel spreadsheet into a Word document. This example will help explain the ideas behind **OLE**, **COM**, and object embedding, giving you an intuitive understanding of what is happening behind the scenes when Word processes an `Equation.3` object.
 
@@ -169,7 +169,7 @@ Let's do it!
 
 ## Embed Excel to Word
 
-Here, I have found a pretty good and interesting blog that demonstrates how to embed an Excel spreadsheet into a Word document.
+Here is a great blog that shows how to embed an Excel spreadsheet into a Word document.
 
 &#x2192; <a href="https://www.thetraininglady.com/embed-excel-in-word/" target="_blank">Embed Excel in a Word document</a>
 
@@ -177,7 +177,7 @@ You might be wondering, what does this have to do with an RTF vulnerability, rig
 
 Well, grab a cup of water, put on your favorite songs, and give your brain a little break, because things are about to get interesting.
 
-What you are about to see is the connection between embedding an Excel spreadsheet into a Word document and how an RTF file can trigger the **Equation Editor** vulnerability. Once you see the relationship between these components, the whole exploitation process will start to make much more sense.
+What you are about to see is the connection between embedding an Excel spreadsheet into a Word document and how an RTF file can trigger the **Equation Editor** vulnerability. Once you understand how these pieces fit together, the entire exploitation process will make much more sense.
 
 Let’s dive in!
 
@@ -191,16 +191,15 @@ First of all, we need to understand what OLE objects are. According to <a href="
 
 &#x21d2; This tells us that OLE objects are stored using the **Compound File Binary Format (CFBF)**, which is based on the <a href="https://en.wikipedia.org/wiki/File_Allocation_Table" target="_blank">File Allocation Table (FAT)</a> concept.
 
-What catch my attention is the following statement from Wikipedia:
+What catch my attention is the following statement from **Wikipedia**:
 
-> OLE allows an editing application to export part of a document to another editing application and then import it with additional content.
-> 
+> OLE allows an editing application to export part of a document to another editing application and then import it with additional content.
 
-This statement is quite interesting. It tells us that an OLE object can be embedded into a completely different application. The word **"different"** is important here. It means that the object can be created by one application and later opened, displayed, or edited by another application that understands the object type.
+This tells us that an OLE object can be embedded into a completely **"different"** application. In other words, an object can be created by one application and later opened, displayed, or edited by another application that understands its format.
 
 But this raises an important question.
 
-If an OLE object is embedded inside a document and later opened on **“a different computer”**, how does Windows know to handle that object?
+If an OLE object is embedded inside a document and later opened on **"a different computer"**, how does Windows know to handle that object?
 
 The answer lies in the **Component Object Model (COM)**.
 
@@ -210,19 +209,19 @@ The answer lies in the **Component Object Model (COM)**.
   <em>Source: <a href="https://en.wikipedia.org/wiki/Component_Object_Model" target="_blank">Component Object Model - Wikipedia</a></em>
 </p>
 
-With the help of **COM**, OLE objects can work across different applications and even on different computers, as long as the appropriate software is installed 😉
+With the help of **COM**, OLE objects can work across different applications and even different computers, as long as the required software is installed 😉
 
 To summarize, if I want to embed an Excel spreadsheet into a Word document, I should create an OLE object that either references the spreadsheet or embeds it directly inside the Word document. This OLE object contains **“instructions”** that only the **COM Interface** for the Word know which application is responsible for handling the object.
 
-In reality, Word does not understand the internal structure of an Excel spreadsheet. Instead, Word relies on **COM Interface** to locate and communicate with the application responsible for handling that object. **COM Interface** takes care of the heavy things behind the scenes, allowing Word to display, edit, or interact with the embedded Excel spreadsheet.
+In reality, Word does not understand the internal structure of an Excel spreadsheet. Instead, Word relies on **COM Interface** to communicate and locate the application responsible for handling that object. **COM Interface** takes care of the heavy things behind the scenes, allowing Word to display, or interact with the embedded Excel spreadsheet.
 
-Here, I have a diagram that will make things easier to understand.
+Here is a simple diagram that makes things easier to understand.
 
 ![image.png](/image/rtf-document/image%2012.png)
 
 In the case of `CVE-2017-11882`, Word encounters an OLE object stored inside the `\objdata` field. Earlier, we have discovered the **ClassName** field is `Equation.3`, so Word uses **COM** to locate the application responsible for handling `Equation.3` object, which is **Equation Editor**.
 
-Once **Equation Editor** is launched and begins processing the embedded object data, the vulnerability is triggered, eventually leading to the execution of the attacker's payload.
+Once **Equation Editor** is launched and starts processing the embedded object data, the vulnerability is triggered, leading to the execution of the attacker's payload.
 
 Before moving on, keep this in your mind.
 
@@ -236,9 +235,9 @@ Microsoft stores OLE objects inside CFBF files, and COM is responsible for findi
 
 Because `CVE-2017-11882` abuses a buffer overflow in the **FontName** field to execute its payload, I want to first arm you guys with some basic knowledge about <a href="https://en.wikipedia.org/wiki/Stack_buffer_overflow" target="_blank">stack buffer overflow</a>.
 
-But don't worry, we'll get to the actual `CVE-2017-11882` exploit shortly after. I just want you guys to have a bird's-eye view of what's happening before we dive into the technical details!
+Don't worry, we'll get to the actual `CVE-2017-11882` exploit shortly. I just want you guys to have a bird's-eye view of what's happening before we dive into the technical details.
 
-Here, I have a simple C program to demonstrate a buffer overflow vulnerability.
+Here is a simple C program that demonstrates a buffer overflow vulnerability.
 
 ```c
 #include <stdio.h>
@@ -257,7 +256,7 @@ int main() {
 }
 ```
 
-The program's flow is fairly simple. It copies the value of the string `myStr` into the local variable `buf` inside the `copy_str` function. The string `myStr` has a length of 5 bytes (including the null terminator `\0`), and the local buffer `buf` also has a size of 5 bytes. As a result, no buffer overflow occurs.
+The program's flow is fairly simple. It copies the string `myStr` into the local variable `buf` inside the `copy_str` function. The string `myStr` is 5 bytes long (including the null terminator `\0`), and the local buffer `buf` is also 5 bytes in size. As a result, no buffer overflow occurs.
 
 The following image shows what the stack frame of the `copy_str` function looks like after the string has been copied successfully.
 
@@ -271,7 +270,7 @@ However, the function `strcpy()` has a well-known vulnerability where it keeps c
   <em>Source: <a href="https://cplusplus.com/reference/cstring/strcpy/" target="_blank">strcpy - cstring</a></em>
 </p>
 
-&#x21d2; This means that if the source string is larger than the destination buffer, `strcpy()` will continue writing beyond the boundaries of the destination buffer. As a result, it can overwrite important values on the stack, such as the **Old EBP** (`ebp`) and the **Return Address** (`eip`).
+&#x21d2; This means that if the source string is larger than the destination buffer, `strcpy()` will continue writing beyond the boundaries of the destination buffer. This can overwrite important values on the stack, such as the **Old EBP** (`ebp`) and the **Return Address** (`eip`).
 
 In the example above, imagine that `myStr` contains the following value:
 
@@ -279,13 +278,13 @@ In the example above, imagine that `myStr` contains the following value:
 HAHAxxxxx01020304
 ```
 
-The dangerous thing about this string is that the extra bytes (`01020304`) can overwrite the **Return Address**. If an attacker replaces the **Return Address** with a valid address, such as the address of `WinExec()`, then when the `copy_str()` function returns, the program will jump to `WinExec()` instead of returning to the original code. In other words, the attacker can change where the program goes next and force it to execute code of their choice.
+The dangerous thing about this string is that the extra bytes (`01020304`) can overwrite the **Return Address**. If an attacker replaces the **Return Address** with a valid address, such as the address of `WinExec()`, then when the `copy_str()` function returns, the program will jump to `WinExec()` instead of returning to the original code. In other words, the attacker can hijack the program's execution flow.
 
 The following image demonstrates this scenario.
 
 ![image.png](/image/rtf-document/image%2015.png)
 
-To understand more about `CVE-2017-11882`, I highly recommend reading the blog from <a href="https://www.paloaltonetworks.com/unit42/about" target="_blank">Palo Alto Unit42</a> research group.
+To understand more about `CVE-2017-11882`, I recommend reading the blog from <a href="https://www.paloaltonetworks.com/unit42/about" target="_blank">Palo Alto Unit42</a> research group.
 
 &#x2192; <a href="https://unit42.paloaltonetworks.com/unit42-analysis-of-cve-2017-11882-exploit-in-the-wild/" target="_blank">Analysis of CVE-2017-11882 Exploit in the Wild</a>
 
@@ -295,7 +294,7 @@ Let's get straight into the setup phase.
 
 ## Office 2010
 
-Yup, as the name of this section suggests, I will use **Office 2010** to create a suitable environment.
+Yup, as the name of this section suggests, **Office 2010** is used to create a suitable environment.
 
 The reason is that the vulnerable application - **Equation Editor** has been removed from all the versions of Microsoft Office.
 
@@ -305,13 +304,13 @@ The reason is that the vulnerable application - **Equation Editor** has been rem
   <em>Source: <a href="https://support.microsoft.com/en-us/office/equation-editor-6eac7d71-3c74-437b-80d3-c7dea24fdf3f" target="_blank">Equation Editor - Microsoft Support</a></em>
 </p>
 
-Remember from the **"What the Shell?"** section, the **ClassName** field in the `CVE-2017-11882` PoC has the value `Equation.3`, which specifies the use of the **Microsoft Equation 3.0** application. Therefore, we need to find a suitable version of Microsoft Office that still includes **Microsoft Equation Editor**.
+Remember from the **"What the Shell?"** section, the **ClassName** field in the `CVE-2017-11882` PoC has the value `Equation.3`, which points to **Microsoft Equation 3.0** application. Therefore, we need an Office version that still includes the **Microsoft Equation Editor**.
 
-To address this problem, I research on the Internet and find out this Office version.
+Here is the Office version solving this problem.
 
 &#x2192; <a href="https://archive.org/details/microsoft-office-2010-standard-x-86-x-64.iso/1000" target="_blank">Microsoft Office 2010 Standard x86 x64.iso</a>
 
-Here is a valid **x64-bit** key:
+Here is a valid key:
 
 ```
 6HJT3-2FGBC-DHKVV-672GY-VCJHK
@@ -335,17 +334,17 @@ It’s time to analyze the malware sample.
 
 ## The Sample
 
-First of all, I view the raw source code of the RTF sample, and search for the control word `\objdata`. Like I have explained above, this control word is the indicator of OLE Object stored inside Microsoft Office Document, specifically RTF Document.
+First, I examine the raw source of the RTF sample and search for the `\objdata` control word. As explained earlier, this control word indicates an OLE object embedded in a Microsoft Office document, specifically an RTF file.
 
 ![image.png](/image/rtf-document/image%2018.png)
 
-Also, I am not sure whether these two OLE Objects are embedded or linked inside the RTF sample, so I search for the control word `\objemb`, and it turns out both objects are embedded inside the sample.
+Also, I am not sure whether these two OLE Objects are embedded or linked inside the RTF sample, so I search for the control word `\objemb`. It turns out both objects are embedded in the sample.
 
 ![image.png](/image/rtf-document/c216945f-145f-4bbf-87ff-5ad17809f173.png)
 
 &#x21d2; Right at this point, I know there are two embedded OLE Objects inside the sample.
 
-Now, I want to know more about these OLE Objects, so I use a tool called `rtfobject`. You can read more about it from <a href="https://github.com/decalage2/oletools/wiki/rtfobj" target="_blank">here</a>.
+Now, I use a tool called `rtfobject` to know more about these OLE Objects. You can read more about it from <a href="https://github.com/decalage2/oletools/wiki/rtfobj" target="_blank">here</a>.
 
 ![image.png](/image/rtf-document/5947fd9e-c6fc-4e8f-a8ed-4c1237d40a35.png)
 
@@ -355,7 +354,7 @@ At this point, I have to decide which one I need to take my shot at first. But s
 
 Besides, this works out perfectly because the goal of this blog is to show you guys how the vulnerability works anyway. HAHA 😄
 
-Let’s dump object ID #1.
+Let's dump object ID #1.
 
 ```bash
 remnux@remnux:~/CVE-2017-11882$ rtfobj 38912beea95850b26832e4656aeb0c1ea041350b15ce11e48dc6b67996bf9756.rtf -s 1
@@ -380,14 +379,14 @@ Remember that the **CFBF** file contains the **OLE object**, and the **COM Inter
 
 At this point, a question pops into my head. What format does **Equation Editor** use internally? More importantly, how can I identify it inside the **OLE object**?
 
-The answer is simple. **Microsoft Equation Editor** relies on an internal format called <a href="https://rtf2latex2e.sourceforge.net/MTEF3.html" target="_blank">MTEF (MathType Equation Format)</a> to store and represent equations. From a reverse engineer's point of view, any document containing an equation must use this format, meaning it should contain an **MTEF header** followed by a series of **MTEF records**.
+The answer is simple. **Microsoft Equation Editor** relies on an internal format called <a href="https://rtf2latex2e.sourceforge.net/MTEF3.html" target="_blank">MTEF (MathType Equation Format)</a> to store and represent equations. From a reverse engineer's perspective, any document containing an equation must use this format, meaning it should contain an **MTEF header** followed by a series of **MTEF records**.
 
 Inside these records, there is a **FontName** field that is vulnerable to a buffer overflow.
 
 Furthermore, this field can even contain the payload in the classic format:
 
 ```bash
-payload + AAAA...A + Return_Address
+payload + AAA...A + Return_Address
 ```
 
 Based on the documentation of <a href="https://web.archive.org/web/20170710114600/http://web.archive.org/web/20010304111449/http://mathtype.com:80/support/tech/MTEF_storage.htm" target="_blank">"How MTEF is Stored in Files and Objects"</a>, before the **MTEF data**, it must first start with a 28-byte header as shown below.
@@ -410,7 +409,7 @@ It turns out that, during the payload crafting process, the attacker may have de
 
 ![image.png](/image/rtf-document/image%2022.png)
 
-To solve this, I simply remove the extra `4-bit` value `0`, and here is the wonderful and lovely result.
+To solve this, I simply remove the extra `4-bit` value `0`, and here is the lovely result.
 
 ![image.png](/image/rtf-document/image%2023.png)
 
@@ -445,7 +444,7 @@ Now, citing the <a href="https://rtf2latex2e.sourceforge.net/MTEF3.html" target=
   <em>Source: <a href="https://rtf2latex2e.sourceforge.net/MTEF3.html#FONT_record" target="_blank">MathType MTEF v.3 (Equation Editor 3.x)</a></em>
 </p>
 
-If you have read the analysis from the **Palo Alto Unit42** research group on <a href="https://unit42.paloaltonetworks.com/unit42-analysis-of-cve-2017-11882-exploit-in-the-wild/" target="_blank">`CVE-2017-11882`</a>, you probably already know that the **FONT** **Record** is where the buffer overflow is triggered.
+If you have read the analysis from the **Palo Alto Unit42** research group on <a href="https://unit42.paloaltonetworks.com/unit42-analysis-of-cve-2017-11882-exploit-in-the-wild/" target="_blank">`CVE-2017-11882`</a>, you probably already know that the **FONT Record** is where the buffer overflow is triggered.
 
 To make things easier to follow, I create the following table based on the hexadecimal data shown in **HxD**.
 
@@ -466,7 +465,7 @@ Now, I am really curious about how **Equation Editor** loads the payload from th
 
 ## Debugging Challenges
 
-One of the biggest hurdles when analyzing this CVE is that the vulnerable process, `EQNEDT32.EXE`, is launched as a child process of Microsoft Word. Standard **F9** debugging often fails because the process spawns and terminates almost immediately.
+One of the biggest challenges when analyzing this CVE is that the vulnerable process, `EQNEDT32.EXE`, spawns and terminates almost immediately, making standard **F9** debugging unreliable.
 
 To help you guys visualize the challenge, I use a tool called <a href="https://learn.microsoft.com/en-us/sysinternals/downloads/procmon" target="_blank">Procmon</a> with the following filter.
 
@@ -488,7 +487,7 @@ Haha, don't worry! I have two solutions for this problem, and they are amazing. 
 
 I learn this trick from `@cybercdh`’s Youtube video. You guys can check out his amazing video from <a href="https://www.youtube.com/watch?v=aBWAHxpXHEk&t=839s" target="_blank">here</a>.
 
-Basically, **GFlags (Image File Execution Options)** is a tool that allows us to force a debugger to attach the moment `EQNEDT32.EXE` starts, ensuring that we never miss the overflow event.
+Basically, **GFlags (Image File Execution Options)** lets us force a debugger to attach as soon as `EQNEDT32.EXE` starts, ensuring we don't miss the overflow event.
 
 You can get it by installing the **WDK**. The following link will guide you through the installation process.
 
@@ -524,7 +523,7 @@ Now, opening the RTF file should launch **x32dbg**. But what is this error!!??
 
 After crushing my head over this problem for nearly a week, I have finally figured out that the error was caused by an incompatible version of **x32dbg**.
 
-Here is the version I was originally using. It was built on **8/20/2025**.
+The version I was originally using was built on **08/20/2025**.
 
 ![image.png](/image/rtf-document/image%2033.png)
 
@@ -534,15 +533,15 @@ Here is my alternative:
 
 &#x2192; <a href="https://x64dbg.en.uptodown.com/windows/download/73124393" target="_blank">Download x64dbg 2022-06-15 for Windows</a>
 
-After updating the path inside the **Debugger** field of **GFlags** to point to this version of **x32dbg**, everything works perfectly.
+After updating the path inside the **Debugger** field to point to this version of **x32dbg**, everything works perfectly.
 
 ![image.png](/image/rtf-document/image%2034.png)
 
 ## Solution #2 - Registry
 
-In this section, the key is to use **Registry** and configure it to start and attach the debugger **x32dbg** as soon as the process `EQNEDT32.EXE` starts.
+In this section, the key is to use **Registry** and configure it to attach the debugger **x32dbg** as soon as the process `EQNEDT32.EXE` starts.
 
-First of all, simply press **Windows + R** and type **"regedit"**, as shown in the image below.
+First of all, press **Windows + R** and type **"regedit"**, as shown below.
 
 ![image.png](/image/rtf-document/image%2035.png)
 
@@ -560,11 +559,11 @@ Navigate to the `eqnedt32.exe` folder, and you should see a string value named `
 
 ![image.png](/image/rtf-document/image%2037.png)
 
-&#x21d2; This means that if you have successfully configured **x32dbg** through **GFlags**, it will automatically create and set the value of the `Debugger` string in the registry to your debugger of choice. As a result, **x32dbg** will launch automatically whenever `EQNEDT32.EXE` is executed.
+&#x21d2; This means that if you have successfully configured **x32dbg** through **GFlags**, it will automatically create and set the `Debugger` registry string to your chosen debugger. As a result, **x32dbg** will launch automatically whenever `EQNEDT32.EXE` is executed.
 
 &#x21d2; This also means that you can freely modify the value of this registry to point to any debugger that you prefer.
 
-Opening the RTF file results in the execution of **x32dbg** as soon as the process `EQNEDT32.EXE` starts.
+Opening the RTF file results in the execution of **x32dbg**.
 
 ![image.png](/image/rtf-document/93834515-b136-4795-b888-371f7e3d80b6.png)
 
@@ -601,11 +600,9 @@ It turns out that these instructions are used to copy data from `esi` to `edi`.
 
 The instruction `shr ecx, 2` divides the value in `ecx` by 4. After that, `rep movsd` starts copying data from `esi` (source) to `edi` (destination) 4 bytes at a time, repeating the process `ecx` times. 
 
-In short, these two instructions are doing the dirty work of copying the payload into the destination buffer.
+Let's explain things a little bit inside **x32dbg**.
 
-Let’s explain things a little bit inside **x32dbg**.
-
-After running the instruction `shr ecx, 2`, the value inside `ecx` has become `0xC` or `12` in decimal format. 
+After running the instruction `shr ecx, 2`, the value inside `ecx` has become `0xC` or `12` in decimal. 
 
 ![image.png](/image/rtf-document/image%2043.png)
 
@@ -617,7 +614,7 @@ Also, we know that at this exact moment, the destination buffer `edi` is still e
 
 ![image.png](/image/rtf-document/image%2046.png)
 
-Some of you might wonder what is the original size of the destination buffer `edi`. The answer lies directly in the assembly instruction below.
+Some of you might wonder what is the original size of the destination buffer `edi`. The answer lies in the assembly instruction below.
 
 ```nasm
 lea edi,dword ptr ss:[ebp-28]           
@@ -627,11 +624,11 @@ As you guys already know, when the register `ebp` is subtracted by a hexadecimal
 
 So, when the instruction `rep movsd` is executed, the destination buffer `edi` will be filled with the attacker payload from the source buffer `esi`. This process copies `48` bytes into the destination buffer `edi`. 
 
-Some might ask how do I know the copied size is `48` bytes. Haha, the answer lies directly in the instruction `shr ecx, 2`, which divides the value inside `ecx` by 4. Since the current value of `ecx` is `0xC`, I just need to do some basic math to get the overflow size.
+Some might ask how do I know the copied size is `48` bytes. The answer lies in the instruction `shr ecx, 2`, which divides the value inside `ecx` by 4. Since the current value of `ecx` is `0xC`, I just need to do some basic math to get the overflow size.
 
 ![image.png](/image/rtf-document/image%2047.png)
 
-As I already showed you guys how a stack buffer overflow works in the section **"Smashing the Stack"**, this overflow of `48` bytes will overwrite the **Old EBP** and the **Return Address**.
+As I already show you guys how a stack buffer overflow works in the section **"Smashing the Stack"**, this overflow of `48` bytes will overwrite **Old EBP** and **Return Address**.
 
 Here is the destination buffer `edi` after executing the instruction `rep movsd`.
 
@@ -667,7 +664,7 @@ The first argument is the one I am interested in the most. This is the command l
   <em>Source: <a href="https://learn.microsoft.com/en-us/windows/win32/api/winbase/nf-winbase-winexec#parameters" target="_blank">WinExec function (winbase.h) - Win32 apps</a></em>
 </p>
 
-Back to our **x32dbg** flow, the attacker hijacks the program's execution flow by altering the **Return Address**, causing it to jump directly to the `WinExec()` function. The data for `lpCmdLine` has already been pushed onto the stack beforehand and is located at address `0x0019F188`.
+Back to our **x32dbg** flow, the attacker hijacks the program's execution flow by modifying the **Return Address**, causing it to jump directly to the `WinExec()` function. The `lpCmdLine` data has already been pushed onto the stack and is located at address `0x0019F188`.
 
 ![image.png](/image/rtf-document/image%2054.png)
 
@@ -685,6 +682,4 @@ Noice, we have finally made it to the end 😉
 
 To be honest, this is my first time taking a DEEP dive into a CVE. My feelings while writing this blog post are amazing and exciting, and these words cannot express all of my emotions at this exact moment. The world is really big, and lots of new things are waiting for me to uncover, and this makes me even more excited.
 
-Besides, I’m really grateful and appreciate you guys spending time reading my blog. If you find any mistakes or things that are unclear, don’t hesitate to contact me via my social media platforms.
-
-Thanks, and what’s next!? 
+Besides, I'm really grateful and appreciate you guys spending time reading my blog. If you find any mistakes or things that are unclear, don’t hesitate to contact me via my social media platforms.
