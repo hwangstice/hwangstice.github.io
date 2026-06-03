@@ -32,7 +32,7 @@ In this article, I present my analysis of an RTF file and explain how attackers 
 
 This exploit is quite old (roughly 10 years at this point), so you'll need a compatible version of Microsoft Office. But don't worry, this blog will walk you through the setup steps.
 
-I also briefly explain how shellcode is stored inside the RTF format. Some of you may want to understand the shellcode structure used in this type of file. Trust me, it will hurt your brain a lot. That said, I won't go too deep into that topic since it is outside the scope of this blog. 
+I also dive a little into how shellcode is stored inside the RTF format. Some of you may want to understand the shellcode structure used in this type of file. Trust me, it will hurt your brain a lot. That said, I won't go too deep into that topic since it is outside the scope of this blog. 
 
 The main goal of this article is to focus on the exploitation technique and the analysis methods I use to uncover what is happening behind the scenes.
 
@@ -350,11 +350,11 @@ Now, I use a tool called `rtfobject` to know more about these OLE Objects. You c
 
 The first OLE object appears to be a file named `license.js`, while the second one contains information related to `CVE-2017-11882`.
 
-At this point, I have to decide which one I need to take my shot at first. But since I love being number one 🥇, let's get straight into analyzing the object with ID #1 😉
+At this point, I have to decide which one to take my shot at first. Since the goal of this blog is to show you guys how the vulnerability works, I can timebox my analysis and only look at the exploitation mechanisms. 
 
-Besides, this works out perfectly because the goal of this blog is to show you guys how the vulnerability works anyway. HAHA 😄
+In this case, the object with ID #1 quickly stands out as the most promising candidate.
 
-Let's dump object ID #1.
+Let's dump the object.
 
 ```bash
 remnux@remnux:~/CVE-2017-11882$ rtfobj 38912beea95850b26832e4656aeb0c1ea041350b15ce11e48dc6b67996bf9756.rtf -s 1
