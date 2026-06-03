@@ -28,7 +28,7 @@ import remarkMath from 'remark-math'
 
 ## TL;DR
 
-In this article, I present my analysis of an RTF file and explain how **`CVE-2017-11882`** exploits a vulnerability in **Equation Editor** to execute malicious payloads.
+In this article, I present my analysis of an RTF file and explain how attackers can exploit **`CVE-2017-11882`** in **Equation Editor** to execute malicious payloads.
 
 This exploit is quite old (roughly 10 years at this point), so you'll need a compatible version of Microsoft Office. But don't worry, this blog will walk you through the setup steps.
 
@@ -221,7 +221,7 @@ Here is a simple diagram that makes things easier to understand.
 
 In the case of `CVE-2017-11882`, Word encounters an OLE object stored inside the `\objdata` field. Earlier, we have discovered the **ClassName** field is `Equation.3`, so Word uses **COM** to locate the application responsible for handling `Equation.3` object, which is **Equation Editor**.
 
-Once **Equation Editor** is launched and starts processing the embedded object data, the vulnerability is triggered, leading to the execution of the attacker's payload.
+Once **Equation Editor** is launched and starts parsing the embedded object data, the vulnerability is triggered, leading to the execution of the attacker's payload.
 
 Before moving on, keep this in your mind.
 
@@ -527,7 +527,7 @@ The version I was originally using was built on **08/20/2025**.
 
 ![image.png](/image/rtf-document/image%2033.png)
 
-Since this build is fairly new, my guess is that there is some issue with how it handles the attach process.
+Since this build is fairly new, my guess is that there is some issue with how it handles the attached process.
 
 Here is my alternative:
 
