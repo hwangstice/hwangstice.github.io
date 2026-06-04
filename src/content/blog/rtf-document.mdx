@@ -95,7 +95,7 @@ The data part is hidden from the document and contains the actual object data. T
 
 Here, I will use the Proof of Concept (PoC) of **`CVE-2017-11882`** from <a href="https://github.com/embedi/CVE-2017-11882/blob/master/example/exploit.rtf" target="_blank">here</a> to demonstrate things more clearly.
 
-![](/image/rtf-document/image%202.png)
+![](/image/rtf-document/poc.png)
 
 <p align="center">
   <em>Source: <a href="https://github.com/embedi/CVE-2017-11882/blob/master/example/exploit.rtf" target="_blank">PoC - exploit.rtf</a></em>
@@ -674,7 +674,9 @@ This is the value of `lpCmdLine`.
 
 After executing `WinExec()`, it spawns `cscript` to run the file `license.js` inside the `%tmp%` folder.
 
-![image.png](/image/rtf-document/image%2056.png)
+![image.png](/image/rtf-document/final-winexec.png)
+
+![](/image/rtf-document/final-procmon.png)
 
 Noice, we have finally made it to the end 😉
 
