@@ -640,7 +640,7 @@ When I navigate my mouse to the last 4 bytes of data in the hex blob above, it s
 
 This means that when the overflowed function `sub_41160F` returns, it jumps to the address of `WinExec()`.
 
-![image.png](/image/rtf-document/image%2050.png)
+![image.png](/image/rtf-document/return-address.png)
 
 As you can see on the stack when **x32dbg** breaks at the instruction `ret`, the value is `0x00430C12`, which is the address of `WinExec()`.
 
