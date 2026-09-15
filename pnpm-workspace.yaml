@@ -1,5 +1,0 @@
-allowBuilds:
-  esbuild: false
-  sharp: false
-  swup: false
-  unrs-resolver: false
