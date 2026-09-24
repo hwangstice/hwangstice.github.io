@@ -2,7 +2,6 @@
 import BaseLayout from "@/layouts/BaseLayout.astro";
 import { Icon } from "astro-icon/components";
 import MainCard from "@/components/MainCard.astro";
-import GitHubStats from "@/components/mdx/GitHubStats.astro";
 ---
 
 <BaseLayout title="About">
@@ -13,119 +12,182 @@ import GitHubStats from "@/components/mdx/GitHubStats.astro";
     alt="about image"
     infoIcon="lucide:user"
   >
-    <div class="space-y-6 mb-6">
+    <div class="mb-6 space-y-6">
+
       <!-- Profile Section -->
       <section class="py-6">
-
-        <!-- Image for avatar -->
-
-        <!-- <div class="avatar"> -->
-          <!-- <div -->
-            <!-- class="w-32 h-32 md:w-40 md:h-40 rounded-xl ring ring-primary ring-offset-base-100 ring-offset-2 overflow-hidden"
-          > -->
-            <!-- <img src="/profile.webp" alt="dathwang" width="160" height="160" loading="eager" /> -->
-          <!-- </div> -->
-        <!-- </div> -->
-
-        <div class="flex flex-col items-center text-center ">
-          <h1 class="text-4xl font-bold mb-4 from-primary to-secondary hover:text-primary transition-colors duration-300 cursor-default">
+        <div class="flex flex-col items-center text-center">
+          <h1
+            class="mb-4 text-4xl font-bold from-primary to-secondary hover:text-primary transition-colors duration-300 cursor-default"
+          >
             Hwangstice
           </h1>
-          <p class="text-xl text-base-content/80 mb-4">
-              Regulus Arne
+
+          <p class="mb-4 text-xl text-base-content/80">
+            Regulus Arne
           </p>
 
-          <div class="flex flex-wrap gap-4 justify-center">
+          <div class="flex flex-wrap justify-center gap-4">
             <a
               href="https://github.com/hwangstice"
               target="_blank"
               rel="noopener noreferrer"
               class="btn btn-sm btn-outline gap-2"
             >
-              <Icon name="lucide:github" class="w-4 h-4" />
+              <Icon name="lucide:github" class="h-4 w-4" />
               <span>GitHub</span>
             </a>
-            <a href="mailto:hwangstice@gmail.com" class="btn btn-sm btn-outline gap-2">
-              <Icon name="lucide:mail" class="w-4 h-4" />
+
+            <a
+              href="mailto:hwangstice@gmail.com"
+              class="btn btn-sm btn-outline gap-2"
+            >
+              <Icon name="lucide:mail" class="h-4 w-4" />
               <span>Email</span>
             </a>
           </div>
-            </br>
-            <p class="text-lg text-base-content/80 mb-4">
-              (wannabe) Reverse Engineer. Addicted to running.
 
-              </br>
-              </br>
-              CTFs with <a href="https://ctftime.org/team/373205" target="_blank" class="font-bold text-lg hover:underline">$cr1pt_K1dd13$</a>.
-            </p>
+          <p class="mt-6 text-lg text-base-content/80">
+            (wannabe) Reverse Engineer. Addicted to running.
+            <br />
+            <br />
+            CTFs with
+            <a
+              href="https://ctftime.org/team/373205"
+              target="_blank"
+              rel="noopener noreferrer"
+              class="text-lg font-bold hover:underline"
+            >
+              $cr1pt_K1dd13$
+            </a>.
+          </p>
         </div>
       </section>
 
-      {/* Honors (Solo) - Replaced Section */}
+      <!-- Solo Section -->
       <section>
-        <h2 class="text-2xl font-bold mb-6 flex items-center gap-2">
-          <Icon name="lucide:binary" class="w-6 h-6 text-primary" />
+        <h2 class="mb-6 flex items-center gap-2 text-2xl font-bold">
+          <Icon name="lucide:binary" class="h-6 w-6 text-primary" />
           Solo
         </h2>
-        {/* Grid layout: 1 column on small screens, 2 on medium, 3 on large */}
-        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-          <div class="p-5 rounded-xl border border-base-300 hover:border-primary hover:shadow-lg transition-all duration-300">
-            <a href="https://reversing.ctfd.io" target="_blank" class="font-bold text-lg hover:underline">
+
+        <div class="grid grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-3">
+          <div
+            class="rounded-xl border border-base-300 p-5 transition-all duration-300 hover:border-primary hover:shadow-lg"
+          >
+            <a
+              href="https://reversing.ctfd.io"
+              target="_blank"
+              rel="noopener noreferrer"
+              class="text-lg font-bold hover:underline"
+            >
               RE CTFd
             </a>
-            <p class="text-sm text-base-content/70 mt-1">Finisher #9</p>
+            <p class="mt-1 text-sm text-base-content/70">
+              Finisher #9
+            </p>
           </div>
 
-          <div class="p-5 rounded-xl border border-base-300 hover:border-primary hover:shadow-lg transition-all duration-300">
-            <a href="http://reversing.kr/" target="_blank" class="font-bold text-lg hover:underline">
+          <div
+            class="rounded-xl border border-base-300 p-5 transition-all duration-300 hover:border-primary hover:shadow-lg"
+          >
+            <a
+              href="http://reversing.kr/"
+              target="_blank"
+              rel="noopener noreferrer"
+              class="text-lg font-bold hover:underline"
+            >
               Reversing.Kr
             </a>
-            <p class="text-sm text-base-content/70 mt-1">Finisher #54</p>
+            <p class="mt-1 text-sm text-base-content/70">
+              Finisher #54
+            </p>
           </div>
 
-          <div class="p-5 rounded-xl border border-base-300 hover:border-primary hover:shadow-lg transition-all duration-300">
-            <a href="https://overthewire.org/wargames/" target="_blank" class="font-bold text-lg hover:underline">
+          <div
+            class="rounded-xl border border-base-300 p-5 transition-all duration-300 hover:border-primary hover:shadow-lg"
+          >
+            <a
+              href="https://overthewire.org/wargames/"
+              target="_blank"
+              rel="noopener noreferrer"
+              class="text-lg font-bold hover:underline"
+            >
               OverTheWire
             </a>
-            <p class="text-sm text-base-content/70 mt-1">Bandit, Leviathan</p>
+            <p class="mt-1 text-sm text-base-content/70">
+              Bandit, Leviathan
+            </p>
           </div>
 
-          <div class="p-5 rounded-xl border border-base-300 hover:border-primary hover:shadow-lg transition-all duration-300">
-            <a href="https://exploit.education/" target="_blank" class="font-bold text-lg hover:underline">
+          <div
+            class="rounded-xl border border-base-300 p-5 transition-all duration-300 hover:border-primary hover:shadow-lg"
+          >
+            <a
+              href="https://exploit.education/"
+              target="_blank"
+              rel="noopener noreferrer"
+              class="text-lg font-bold hover:underline"
+            >
               Exploit Education
             </a>
-            <p class="text-sm text-base-content/70 mt-1">Protostar</p>
+            <p class="mt-1 text-sm text-base-content/70">
+              Protostar
+            </p>
           </div>
         </div>
       </section>
 
-      {/* Education Section - Replaced Section */}
+      <!-- Education Section -->
       <section class="mt-10">
-        <h2 class="text-2xl font-bold mb-6 flex items-center gap-2">
-          <Icon name="lucide:graduation-cap" class="w-6 h-6 text-primary" />
+        <h2 class="mb-6 flex items-center gap-2 text-2xl font-bold">
+          <Icon name="lucide:graduation-cap" class="h-6 w-6 text-primary" />
           Education
         </h2>
-        <div class="p-5 rounded-xl border border-base-300 hover:border-primary hover:shadow-lg transition-all duration-300">
-          <a href="https://www.uit.edu.vn/" target="_blank" class="font-bold text-lg hover:underline">
+
+        <div
+          class="rounded-xl border border-base-300 p-5 transition-all duration-300 hover:border-primary hover:shadow-lg"
+        >
+          <a
+            href="https://www.uit.edu.vn/"
+            target="_blank"
+            rel="noopener noreferrer"
+            class="text-lg font-bold hover:underline"
+          >
             VNUHCM – University of Information Technology
           </a>
-          <p class="text-sm text-base-content/70 mt-1">Bachelor of Information Security (Sep. 2023 – Present)</p>
+
+          <p class="mt-1 text-sm text-base-content/70">
+            Bachelor of Information Security (Sep. 2023 – Present)
+          </p>
         </div>
       </section>
 
-      {/* Experience Section */}
+      <!-- Experience Section -->
       <section class="mt-10">
-        <h2 class="text-2xl font-bold mb-6 flex items-center gap-2">
-          <Icon name="lucide:flame" class="w-6 h-6 text-primary" />
+        <h2 class="mb-6 flex items-center gap-2 text-2xl font-bold">
+          <Icon name="lucide:flame" class="h-6 w-6 text-primary" />
           Experience
         </h2>
-        <div class="p-5 rounded-xl border border-base-300 hover:border-primary hover:shadow-lg transition-all duration-300">
-          <a href="https://sec.vnpt.vn" target="_blank" class="font-bold text-lg hover:underline">
+
+        <div
+          class="rounded-xl border border-base-300 p-5 transition-all duration-300 hover:border-primary hover:shadow-lg"
+        >
+          <a
+            href="https://sec.vnpt.vn"
+            target="_blank"
+            rel="noopener noreferrer"
+            class="text-lg font-bold hover:underline"
+          >
             VCI - VNPT Cyber Immunity
           </a>
-          <p class="text-sm text-base-content/70 mt-1">Malware Analyst Intern (Jun. 2026 – Present)</p>
+
+          <p class="mt-1 text-sm text-base-content/70">
+            Malware Analyst Intern (Jun. 2026 – Present)
+          </p>
         </div>
       </section>
+
     </div>
   </MainCard>
 </BaseLayout>
