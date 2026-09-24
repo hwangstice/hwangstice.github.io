@@ -3,6 +3,7 @@ title: "OverTheWire - Bandit"
 description: "Writeup for OverTheWire Bandit"
 pubDate: "April 05 2025"
 image: /image/blog-cover/bandit.gif
+imageSource: "https://www.tumblr.com/digitallyaesthetic/159702258249"
 categories:
   - tech
 tags:

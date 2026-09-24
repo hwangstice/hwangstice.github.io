@@ -3,6 +3,7 @@ title: "Protostar - Format String"
 description: "Writeup for Protostar Format String"
 pubDate: "March 09 2025"
 image: /image/blog-cover/format.jpg
+imageSource: "https://x.com/teemjav/status/1366152315791675395"
 categories:
   - tech
 tags:

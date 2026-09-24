@@ -30,6 +30,7 @@ const displayDate = blog.data.pubDate ? dayjs(blog.data.pubDate).format(DATE_FOR
     <PostInfo
       pubDate={displayDate}
       badge={blog.data.badge}
+      imageSource={blog.data.imageSource}
       word={remarkPluginFrontmatter.totalCharCount}
       time={remarkPluginFrontmatter.readingTime}
     />

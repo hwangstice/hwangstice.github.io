@@ -3,6 +3,7 @@ title: "Protostar - Final"
 description: "Writeup for Protostar Final"
 pubDate: "March 31 2025"
 image: /image/blog-cover/final.gif
+imageSource: "https://1041uuu.jp/works?img=b16"
 categories:
   - tech
 tags:

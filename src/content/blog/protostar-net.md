@@ -3,6 +3,7 @@ title: "Protostar - Net"
 description: "Writeup for Protostar Net"
 pubDate: "March 23 2025"
 image: /image/blog-cover/net.gif
+imageSource: "https://www.deviantart.com/valenberg/art/Fade-Out-501014035"
 categories:
   - tech
 tags:

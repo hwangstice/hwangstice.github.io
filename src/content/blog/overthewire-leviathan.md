@@ -3,6 +3,7 @@ title: "OverTheWire - Leviathan"
 description: "Writeup for OverTheWire Leviathan"
 pubDate: "April 12 2025"
 image: /image/blog-cover/rain.gif
+imageSource: "https://www.tumblr.com/apolism/172027954210/gasstation"
 categories:
   - tech
 tags:

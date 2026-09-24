@@ -2,7 +2,7 @@
 import { Icon } from "astro-icon/components";
 import { t } from "@config";
 import type { PostData } from "@interfaces/data";
-const { pubDate, badge, word, time } = Astro.props as PostData;
+const { pubDate, badge, word, time, imageSource } = Astro.props as PostData;
 ---
 
 <div class="flex flex-col sm:flex-row sm:justify-between gap-y-2 mb-4 text-xs sm:text-sm opacity-75">
@@ -21,6 +21,26 @@ const { pubDate, badge, word, time } = Astro.props as PostData;
           <Icon name="lucide:bookmark" class="h-4 w-4 flex-shrink-0" />
           <span class="truncate">{badge}</span>
         </span>
+      )
+    }
+    {
+      imageSource && (
+        <div
+          class="tooltip tooltip-right"
+          data-tip="Background Image Source"
+        >
+          <a
+            tabindex="0"
+            href={imageSource}
+            target="_blank"
+            rel="noopener noreferrer"
+            aria-label="Background image source"
+            class="flex flex-wrap items-center gap-1 font-normal no-underline transition-colors duration-200 ease-in-out hover:text-primary"
+          >
+            <Icon name="lucide:cloud" class="h-4 w-4 flex-shrink-0" />
+            <span class="truncate">Artwork</span>
+          </a>
+        </div>
       )
     }
   </div>
