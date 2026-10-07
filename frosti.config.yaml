@@ -4,7 +4,7 @@ site:
   title: 食べて、寝て、Reverse、繰り返す # 网站的标题
   description: A personal blog focused on Reverse Engineering, Malware Analysis, and cybersecurity. # 网站的描述，用于SEO等
   language: en # 网站的语言，例如 "en" 是英文
-  favicon: /favicon-wiki.ico # 网站的图标，用于浏览器标签栏和其他地方显示
+  favicon: /eyyyyy_im_so_back.jpg # 网站的图标，用于浏览器标签栏和其他地方显示
   theme: # 更多主题 https://daisyui.com/docs/themes/
     light: winter # 主题的浅色模式
     dark: dracula # 主题的深色模式
@@ -65,7 +65,7 @@ site:
 user:
   name: Hwangstice # 用户名
   site: "https://hwangstice.github.io/" # 用户的网站链接
-  avatar: /amazing.gif # 用户头像路径
+  avatar: /eyyyyy_im_so_back.jpg # 用户头像路径
   sidebar: # 侧边栏配置
     social:
       - href: "https://github.com/hwangstice"
