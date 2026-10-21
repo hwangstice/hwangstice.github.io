@@ -1,3 +1,4 @@
+
 ---
 import BaseLayout from "@/layouts/BaseLayout.astro";
 import { Icon } from "astro-icon/components";
@@ -7,13 +8,12 @@ import MainCard from "@/components/MainCard.astro";
 <BaseLayout title="About">
   <MainCard
     title="About"
-    description="Cherish life, Enjoy every moments <3"
+    description="Cherish life, enjoy every moment <3"
     image="/home.webp"
-    alt="about image"
+    alt="About image"
     infoIcon="lucide:user"
   >
     <div class="mb-6 space-y-6">
-
       <!-- Profile Section -->
       <section class="py-6">
         <div class="flex flex-col items-center text-center">
@@ -27,6 +27,7 @@ import MainCard from "@/components/MainCard.astro";
             We Only Live Once
           </p>
 
+          <!-- Social Links -->
           <div class="flex flex-wrap justify-center gap-4">
             <a
               href="https://github.com/hwangstice"
@@ -47,24 +48,70 @@ import MainCard from "@/components/MainCard.astro";
             </a>
           </div>
 
-          <p class="mt-6 text-lg text-base-content/80">
-            I believe knowledge is for everyone. Achievements mean little to me if I can't help someone else learn or get better. If my little blog can help you, even 1%, that already makes me happy ^^
+          <!-- Biography -->
+          <div class="mt-6 text-lg text-base-content/80"
+          >
+            <p>
+              I believe knowledge is for everyone. Achievements mean little
+              to me if I can't help someone else learn or get better. If my
+              little blog can help you, even 1%, that already makes me
+              happy ^^
+            </p>
             </br>
+            <p>
+              Btw, there are four amazing people who have helped me a lot
+              on this journey, including 
+              <a
+                href="https://dad0qbu.github.io"
+                target="_blank"
+                rel="noopener noreferrer"
+                class="font-bold hover:underline"
+              >
+              Duy
+              </a>, 
+              <a
+                href="https://www.feyrer.de"
+                target="_blank"
+                rel="noopener noreferrer"
+                class="font-bold hover:underline"
+              >
+                Hubertf
+              </a>, 
+              <a
+                href="https://clowncs.github.io"
+                target="_blank"
+                rel="noopener noreferrer"
+                class="font-bold hover:underline"
+              >
+                Peter
+              </a>, and
+              <a
+                href="https://github.com/ItzDavi"
+                target="_blank"
+                rel="noopener noreferrer"
+                class="font-bold hover:underline"
+              >
+                AgentPerry
+              </a>. These guys are Chads in their own
+              fields, and I'm grateful I got to know and learn from them.
+              Love you guys ❤️
+            </p>
             </br>
-            Btw, there are four amazing people who've helped me a lot on this journey, including Peter (@clowncs), Duy (@d0qbu), AgentPerry, and Hubertf. These guys are Chads in their own fields, and I'm grateful I got to know and learn from them ❤️
-            </br>
-            </br>
-            Below is the list of things that I have achieved along the way with
-            <a
-              href="https://ctftime.org/team/373205"
-              target="_blank"
-              rel="noopener noreferrer"
-              class="text-lg font-bold hover:underline"
-            >
-              $cr1pt_K1dd13$
-            </a>
-            . I am nothing without everyone, so yeah, these achievements are for everyone :3
-          </p>
+            <p>
+              Below is the list of things that I have achieved along the
+              way with
+              <a
+                href="https://ctftime.org/team/373205"
+                target="_blank"
+                rel="noopener noreferrer"
+                class="font-bold hover:underline"
+              >
+                $cr1pt_K1dd13$
+              </a>.
+              I am nothing without everyone, so yeah, these achievements
+              are for everyone :3
+            </p>
+          </div>
         </div>
       </section>
 
@@ -145,7 +192,10 @@ import MainCard from "@/components/MainCard.astro";
       <!-- Education Section -->
       <section class="mt-10">
         <h2 class="mb-6 flex items-center gap-2 text-2xl font-bold">
-          <Icon name="lucide:graduation-cap" class="h-6 w-6 text-primary" />
+          <Icon
+            name="lucide:graduation-cap"
+            class="h-6 w-6 text-primary"
+          />
           Education
         </h2>
 
@@ -191,7 +241,6 @@ import MainCard from "@/components/MainCard.astro";
           </p>
         </div>
       </section>
-
     </div>
   </MainCard>
 </BaseLayout>
